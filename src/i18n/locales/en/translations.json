@@ -1,0 +1,16 @@
+{
+  "nav": {
+    "dashboards": {
+      "dashboards": "Dashboards",
+      "sales":"Sales",
+      "category":"Category",
+      "prompts":"Prompts",
+      "users":"Users"
+    },
+    "settings": {
+      "settings": "Settings",
+      "general": "General",
+      "appearance": "Appearance"
+    }
+  }
+}
