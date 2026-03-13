@@ -30,6 +30,49 @@ const PromptReducer = (state = initialState, action) => {
                 error: null
             }
         }
+        case "PROMPT_DATA_CREATE_LOADING":
+            return {
+                ...state,
+                loading: true,
+                error: null
+            }
+        case "PROMPT_DATA_CREATE_SUCCESS": {
+            // const cacheKey = action.meta.categoryId || 'ALL';
+            const newPrompt = action.payload.data; // Assuming action.payload.data is the new prompt object
+            
+            // We need to update ALL cache entries that might contain this prompt's category
+            const updatedCache = { ...state.cache };
+            
+            Object.keys(updatedCache).forEach(key => {
+                const cacheData = { ...updatedCache[key] };
+                if (cacheData.categories) {
+                    const categoryIndex = cacheData.categories.findIndex(c => 
+                        (c._id || c.id) === (newPrompt.category?._id || newPrompt.category?.id || newPrompt.category || action.meta.categoryId)
+                    );
+                    
+                    if (categoryIndex !== -1) {
+                        const updatedCategories = [...cacheData.categories];
+                        const category = { ...updatedCategories[categoryIndex] };
+                        category.prompts = [newPrompt, ...(category.prompts || [])];
+                        updatedCategories[categoryIndex] = category;
+                        updatedCache[key] = { ...cacheData, categories: updatedCategories };
+                    }
+                }
+            });
+
+            return {
+                ...state,
+                loading: false,
+                cache: updatedCache,
+                error: null
+            }
+        }
+        case "PROMPT_DATA_CREATE_ERROR":
+            return {
+                ...state,
+                loading: false,
+                error: action.payload
+            }
         case "PROMPT_DATA_LOAD_MORE_LOADING":
             return {
                 ...state,
@@ -82,7 +125,7 @@ const PromptReducer = (state = initialState, action) => {
                 error: action.payload
             }
         case "PROMPT_DATA_MOVE": {
-            const { categoryId, promptId, toIndex,  cacheKey: metaCacheKey } = action.payload;
+            const { categoryId, promptId, toIndex, cacheKey: metaCacheKey } = action.payload;
             const cacheKey = metaCacheKey || 'ALL';
 
             const targetData = state.cache[cacheKey];
@@ -132,6 +175,43 @@ const PromptReducer = (state = initialState, action) => {
             };
         }
         case "PROMPT_DATA_MOVE_ERROR": {
+            const cacheKey = action.payload.cacheKey || 'ALL';
+            return {
+                ...state,
+                cache: {
+                    ...state.cache,
+                    [cacheKey]: action.payload.data
+                }
+            };
+        }
+        case "PROMPT_DATA_UPDATE": {
+            const { promptId, isActive, cacheKey: metaCacheKey } = action.payload;
+            const cacheKey = metaCacheKey || 'ALL';
+
+            const targetData = state.cache[cacheKey];
+            if (!targetData || !targetData.categories) return state;
+
+            const updatedCategories = targetData.categories.map(category => ({
+                ...category,
+                prompts: category.prompts.map(prompt =>
+                    (prompt._id || prompt.id) === promptId
+                        ? { ...prompt, isActive }
+                        : prompt
+                )
+            }));
+
+            return {
+                ...state,
+                cache: {
+                    ...state.cache,
+                    [cacheKey]: {
+                        ...targetData,
+                        categories: updatedCategories
+                    }
+                }
+            };
+        }
+        case "PROMPT_DATA_UPDATE_ERROR": {
             const cacheKey = action.payload.cacheKey || 'ALL';
             return {
                 ...state,

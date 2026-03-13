@@ -15,7 +15,7 @@ const CategoryRow = ({ index, style, data }) => {
 
 
 export default function ListComponent({ categories }) {
-    console.log("ListComponent received data:", categories?.length);
+    // console.log("ListComponent received data:", categories?.length);
 
     if (!categories || categories.length === 0) {
         return <div className="p-4 text-center">No data found</div>;

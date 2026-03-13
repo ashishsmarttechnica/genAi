@@ -40,38 +40,36 @@ export default function UsersList() {
     const currentPage = pagination.pageIndex + 1;
     const currentLimit = pagination.pageSize;
 
-    // Include sorting parameters in the request
-    const nameOrder = sortConfig.column === "name" ? sortConfig.order : "";
-    const emailOrder = sortConfig.column === "email" ? sortConfig.order : "";
-    const createdAtOrder = sortConfig.column === "createdAt" ? sortConfig.order : "";
-
-    const cacheKey = `page-${currentPage}-limit-${currentLimit}-sort-${sortConfig.column}-${sortConfig.order}`;
+    const cacheKey = `page-${currentPage}-limit-${currentLimit}`;
 
     // Basic Caching: Fetch only if data is missing or pagination changed
     if (cache && cache[cacheKey]) {
       dispatch({ type: "USERS_DATA_SUCCESS", payload: cache[cacheKey] });
     } else {
-      dispatch(getUserDataAction(currentPage, currentLimit, nameOrder, emailOrder, createdAtOrder));
+      dispatch(getUserDataAction(currentPage, currentLimit));
     }
-  }, [pagination.pageIndex, pagination.pageSize, dispatch, sortConfig]);
+  }, [pagination.pageIndex, pagination.pageSize, dispatch]);
 
 
   // handle sort by column
   const handleSort = (column) => {
-    let newOrder = "asc";
+    let newOrder = "asc"; // Default to ascending for a new column
 
     if (sortConfig.column === column) {
-      if (sortConfig.order === "asc") newOrder = "desc";
-      else if (sortConfig.order === "desc") newOrder = "";
-      else newOrder = "asc";
+      // If the same column is clicked, cycle through orders
+      if (sortConfig.order === "asc") {
+        newOrder = "desc";
+      } else if (sortConfig.order === "desc") {
+        newOrder = ""; // Clear sort
+      } else {
+        newOrder = "asc"; // If no order or invalid, default to asc
+      }
     }
 
     setSortConfig({ column, order: newOrder });
     // Pagination reset on sort
     setPagination(prev => ({ ...prev, pageIndex: 0 }));
   }
-
-  // console.log(users, "users");
 
 
   // filter data by search
@@ -80,6 +78,42 @@ export default function UsersList() {
     const fullName = item?.firstName + " " + item?.lastName;
     return fullName.toLowerCase().includes(search.toLowerCase());
   }) || [];
+
+
+  const sortedAndFilteredData = useMemo(() => {
+    let result = [...filtterData];
+
+    if (sortConfig.column && sortConfig.order) {
+      result.sort((a, b) => {
+        let valA = a[sortConfig.column];
+        let valB = b[sortConfig.column];
+
+        // Custom logic for Name (firstName + lastName)
+        if (sortConfig.column === 'name') {
+          valA = `${a.firstName} ${a.lastName}`;
+          valB = `${b.firstName} ${b.lastName}`;
+        }
+
+        // String Comparison (Name, Email)
+        if (typeof valA === 'string') {
+          return sortConfig.order === 'asc'
+            ? valA.localeCompare(valB)
+            : valB.localeCompare(valA);
+        }
+
+        // Date Comparison (Joined Date)
+        if (sortConfig.column === 'createdAt') {
+          return sortConfig.order === 'asc'
+            ? new Date(valA) - new Date(valB)
+            : new Date(valB) - new Date(valA);
+        }
+
+        return sortConfig.order === 'asc' ? valA - valB : valB - valA;
+      });
+    }
+    return result;
+  }, [filtterData, sortConfig]);
+
 
 
   // columns for table
@@ -142,7 +176,7 @@ export default function UsersList() {
   );
 
   const table = useReactTable({
-    data: filtterData,
+    data: sortedAndFilteredData,
     columns,
     getCoreRowModel: getCoreRowModel(),
     manualPagination: true,
@@ -189,17 +223,17 @@ export default function UsersList() {
                           }
                         }}
                       >
-                        <span className="flex-1">
+                        <span className="flex gap-2 items-center">
                           {header.isPlaceholder
                             ? null
                             : flexRender(
                               header.column.columnDef.header,
                               header.getContext()
                             )}
+                          {(header.column.id !== "profileImage" && header.column.id !== "role") && (
+                            <TableSortIcon sorted={sortConfig.column === header.column.id && sortConfig.order ? sortConfig.order : false} />
+                          )}
                         </span>
-                        {(header.column.id !== "profileImage" && header.column.id !== "role") && (
-                          <TableSortIcon sorted={sortConfig.column === header.column.id && sortConfig.order ? sortConfig.order : false} />
-                        )}
                       </div>
                     </Th>
                   ))}

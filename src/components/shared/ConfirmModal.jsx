@@ -134,7 +134,7 @@ function Confirm({ onOk, state, messages, confirmLoading, onClose, focusRef }) {
           <Button
             onClick={onClose}
             color="success"
-            className="mt-12 h-9 min-w-[7rem]"
+            className="mt-12 h-9 min-w-28"
           >
             {mergedMessages[state].actionText}
           </Button>
@@ -143,7 +143,7 @@ function Confirm({ onOk, state, messages, confirmLoading, onClose, focusRef }) {
             <Button
               onClick={onClose}
               variant="outlined"
-              className="h-9 min-w-[7rem]"
+              className="h-9 min-w-28"
             >
               Cancel
             </Button>
@@ -153,7 +153,7 @@ function Confirm({ onOk, state, messages, confirmLoading, onClose, focusRef }) {
                 ref={focusRef}
                 onClick={onOk}
                 color="primary"
-                className="h-9 min-w-[7rem] space-x-2 "
+                className="h-9 min-w-28 space-x-2 "
               >
                 {confirmLoading && spinner}
                 <span> {mergedMessages[state].actionText}</span>
@@ -164,7 +164,7 @@ function Confirm({ onOk, state, messages, confirmLoading, onClose, focusRef }) {
               <Button
                 onClick={onOk}
                 color="error"
-                className="h-9 min-w-[7rem] space-x-2 "
+                className="h-9 min-w-28 space-x-2 "
               >
                 {confirmLoading && spinner}
                 <span> {mergedMessages[state].actionText}</span>

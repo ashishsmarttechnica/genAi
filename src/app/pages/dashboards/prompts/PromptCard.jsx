@@ -1,10 +1,18 @@
+import { useState } from 'react'
 import { Card } from 'components/ui/Card'
 import { useSortable } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
 import { EllipsisVerticalIcon } from "@heroicons/react/24/outline"
+import { Switch } from "components/ui";
+import { useDispatch } from 'react-redux';
+import { updatePromptAction } from 'redux/actions/promptAction';
+import { toast } from "sonner";
+import { Square2StackIcon, CheckIcon } from "@heroicons/react/24/outline"
 
 
 export default function PromptCard({ prompt, index, categoryId }) {
+  const [copied, setCopied] = useState(false)
+  const dispatch = useDispatch()
   const {
     attributes,
     listeners,
@@ -21,7 +29,27 @@ export default function PromptCard({ prompt, index, categoryId }) {
     zIndex: isDragging ? 999 : "auto"
   }
 
-  // console.log(prompt, "prompt data");
+  const handleStatusChange = async (checked) => {
+    const response = await dispatch(updatePromptAction(prompt._id || prompt.id, prompt.title, checked, categoryId));
+    if (response?.success) {
+      toast.success("Status updated successfully");
+    } else {
+      toast.error("Failed to update status");
+    }
+  }
+  // console.log(prompt, "prompt");
+
+  const handleCopy = () => {
+    if (prompt?.title && prompt?.readyMatePrompt) {
+      navigator.clipboard.writeText(prompt.title + "\n" + prompt.readyMatePrompt);
+      setCopied(true)
+      setTimeout(() => {
+        setCopied(false)
+      }, 2000)
+      toast.success("Prompt copied to clipboard");
+    }
+  }
+
 
   return (
     <div ref={setNodeRef} style={style}>
@@ -40,8 +68,19 @@ export default function PromptCard({ prompt, index, categoryId }) {
             </div>
           )}
 
+          <div
+            onClick={handleCopy}
+            className={` absolute ${categoryId ? "right-10" : "right-3"} top-3 flex -space-x-4 text-gray-400 active:text-primary-500 transition-colors opacity-100 cursor-pointer active:scale-95 z-10 p-2`}>
+            {copied ? (
+              <CheckIcon className="size-5 text-success" />
+            ) : (
+              <Square2StackIcon className="size-5" />
+            )}
+          </div>
+
+
           {/* Left Column - Image (Spans 4 columns on md screens) */}
-          <div className='md:col-span-4 lg:col-span-3 relative h-55 overflow-hidden'>
+          <div className='md:col-span-4 lg:col-span-3 relative h-60 overflow-hidden'>
             <img
               src={prompt.thumbnail}
               alt={prompt.title}
@@ -64,13 +103,18 @@ export default function PromptCard({ prompt, index, categoryId }) {
               {prompt.readyMatePrompt || prompt.description}
             </p>
 
-            <div className='flex flex-wrap items-center justify-between gap-2 mt-auto pt-4'>
+            <div className='mt-2'>
+
+              <Switch variant="outlined" checked={prompt.isActive} label={prompt.isActive ? "Active" : "Inactive"} onChange={(e) => handleStatusChange(e.target.checked)} />
+            </div>
+
+            <div className='flex flex-wrap items-center justify-between gap-2 mt-auto'>
               {prompt.categories?.map((c, index) => (
                 <span
                   key={index}
                   className="px-3 py-1 text-xs font-medium text-primary-700 bg-primary-50 rounded-full dark:bg-primary-500/10 dark:text-primary-400 border border-primary-100 dark:border-primary-500/20"
                 >
-                  {c.name}
+                  category : {c.name}
                 </span>
               ))}
               <p>index : {index + 1}</p>

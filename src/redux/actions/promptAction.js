@@ -42,9 +42,43 @@ export const getPromptAction = (page = 1, limit = 10, search = "", categoryId = 
 }
 
 
+export const createPromptAction = (promptData, categoryId = "") => {
+    return async (dispatch) => {
+        dispatch({type:"PROMPT_DATA_CREATE_LOADING"})
+        try {
+            const res = await axiosInstance.post("prompt",promptData,
+                {headers:{
+                    "Content-Type": "multipart/form-data"
+                }}
+            )
+
+            if(res && res.data && res.data.success){
+                dispatch({type:"PROMPT_DATA_CREATE_SUCCESS",payload:res.data, meta: { categoryId }})
+                return {
+                    success:true,
+                    message:res.data.message || "prompt created successfully",
+                    data:res.data
+                }
+            }
+            else{
+                dispatch({type:"PROMPT_DATA_CREATE_ERROR",payload:res.data?.message || "Failed to create prompt"})
+                return {
+                    success:false,
+                    message:res.data?.message || "Failed to create prompt"
+                }
+            }
+        } catch (error) {
+            dispatch({type:"PROMPT_DATA_CREATE_ERROR",payload:error.response?.data?.message})
+            return {
+                success:false,
+                message:error.response?.data?.message || "Failed to create prompt"
+            }
+        }
+    }
+}
 
 
-export const updatePromptAction = (categoryId, promptId, newIndex, targetDbIndex, cacheKey = 'ALL') => {
+export const movePromptAction = (categoryId, promptId, newIndex, targetDbIndex, cacheKey = 'ALL') => {
     return async (dispatch, getState) => {
         const previousDataBackup = getState().prompt?.cache?.[cacheKey];
         try {
@@ -72,13 +106,53 @@ export const updatePromptAction = (categoryId, promptId, newIndex, targetDbIndex
                     data: res,
                 };
             } else {
-                dispatch({ type: "PROMPT_DATA_MOVE_ERROR", payload: { data: previousDataBackup, cacheKey } });
+                dispatch({ type: "PROMPT_DATA_ERROR", payload: { data: previousDataBackup, cacheKey } });
                 console.error("move Failed reverting ui back");
             }
         }
         catch (error) {
-            dispatch({ type: "PROMPT_DATA_MOVE_ERROR", payload: { data: previousDataBackup } });
+            dispatch({ type: "PROMPT_DATA_ERROR", payload: { data: previousDataBackup } });
             console.error("Move Api error ", error)
+        }
+    }
+}
+
+
+
+export const updatePromptAction = (promptId, promptName, isActive, categoryId = "") => {
+    return async (dispatch, getState) => {
+        const cacheKey = categoryId || 'ALL';
+        const previousDataBackup = getState().prompt?.cache?.[cacheKey];
+        try {
+            // instant feedback (ui update - array position mapping)
+            dispatch({
+                type: "PROMPT_DATA_UPDATE",
+                payload: { promptId, isActive, cacheKey }
+            })
+
+            // api call (Database index mapping)
+            const res = await axiosInstance.put(`prompt/${promptId}`, {
+                title: promptName,
+                isActive: isActive,
+            });
+
+            if (res && res.data && res.data.success) {
+                // DON'T dispatch PROMPT_DATA_SUCCESS here because the move API response 
+                // doesn't contain the full prompts array. The optimistic update already 
+                // fixed the UI, so we just return success.
+                return {
+                    success: true,
+                    message: res.data.message || "Prompt data update successfully!",
+                    data: res,
+                };
+            } else {
+                dispatch({ type: "PROMPT_DATA_ERROR", payload: { data: previousDataBackup, cacheKey } });
+                console.error("update Failed reverting ui back");
+            }
+        }
+        catch (error) {
+            dispatch({ type: "PROMPT_DATA_ERROR", payload: { data: previousDataBackup, cacheKey } });
+            console.error("Update Api error ", error)
         }
     }
 }

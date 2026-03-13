@@ -38,13 +38,13 @@ export default function SignIn() {
 
     if (data.email && data.password) {
       dispatch(loginAdmin(data)).then((res) => {
-        if (res.success) {
+        if (res?.success) {
           setLoader(false);
           navigate("/");
           toast.success(res.message);
         } else {
           setLoader(false);
-          toast.error(res.message);
+          toast.error(res?.message || "Something went wrong");
         }
       })
     } else {
@@ -69,7 +69,7 @@ export default function SignIn() {
             </div>
           </div>
           <Card className="mt-5 rounded-lg p-5 lg:p-7">
-            <form onSubmit={handleLogin} autoComplete="off">
+            <form onSubmit={handleLogin}>
               <div className="space-y-4">
                 <Input
                   label="Email"
