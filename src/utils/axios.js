@@ -37,31 +37,30 @@ axiosClient.interceptors.response.use(
         const isOnLoginPage = pathname === "/" && (hash === "" || hash === "#/");
 
 
-        console.log('[Axios Debug]', {
-            pathname,
-            hash,
-            isOnLoginPage,
-            isAuthError,
-            isLoggingOut,
-            status: error.response?.status
-        });
+        // console.log('[Axios Debug]', {
+        //     pathname,
+        //     hash,
+        //     isOnLoginPage,
+        //     isAuthError,
+        //     isLoggingOut,
+        //     status: error.response?.status
+        // });
 
         if (isAuthError && !isOnLoginPage && !isLoggingOut) {
             // Set flag to prevent duplicate logout attempts
             isLoggingOut = true;
 
-            console.log(`[Auth Error] ${error.response.status} - Initiating logout flow`);
+            // console.log(`[Auth Error] ${error.response.status} - Initiating logout flow`);
 
             try {
                 localStorage.removeItem("id");
-                // window.location.replace("/login");
+                window.location.replace("/login");
             }
             catch (err) {
                 console.error("[Logout Error]", err);
                 isLoggingOut = false;
-                // window.location.replace("/");
+                window.location.replace("/");
             }
-
         }
         return Promise.reject(error);
     }

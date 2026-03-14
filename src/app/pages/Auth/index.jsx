@@ -1,5 +1,5 @@
 // Import Dependencies
-import { Link } from "react-router";
+// import { Link } from "react-router";
 import { EnvelopeIcon, LockClosedIcon } from "@heroicons/react/24/outline";
 import { useDispatch } from "react-redux";
 import { toast } from "sonner";
@@ -18,6 +18,7 @@ export default function SignIn() {
   const [loader, setLoader] = useState(false);
   const dispatch = useDispatch();
   const navigate = useNavigate();
+  const [rememberMe, setRememberMe] = useState(true);
   const [data, setData] = useState({
     email: "",
     password: "",
@@ -56,7 +57,7 @@ export default function SignIn() {
   return (
     <Page title="Login">
       <main className="min-h-100vh grid w-full grow grid-cols-1 place-items-center">
-        <div className="w-full max-w-104 p-4 sm:px-5">
+        <div className="w-full max-w-114 p-4 sm:px-5">
           <div className="text-center">
             <Logo className="mx-auto size-16" />
             <div className="mt-4">
@@ -110,14 +111,14 @@ export default function SignIn() {
                 </InputErrorMsg>
               </div> */}
 
-              <div className="mt-4 flex items-center justify-between space-x-2">
-                <Checkbox label="Remember me" />
-                <a
+              <div className="mt-6 flex items-center justify-between space-x-2">
+                <Checkbox label="Remember me" checked={rememberMe} onChange={(e) => setRememberMe(e.target.checked)} />
+                {/* <a
                   href="##"
                   className="text-xs text-gray-400 transition-colors hover:text-gray-800 focus:text-gray-800 dark:text-dark-300 dark:hover:text-dark-100 dark:focus:text-dark-100"
                 >
                   Forgot Password?
-                </a>
+                </a> */}
               </div>
 
               {loader ? <Button type="submit" className="mt-5 w-full" color="primary">
@@ -126,7 +127,7 @@ export default function SignIn() {
                 Sign In
               </Button>}
             </form>
-            <div className="mt-4 text-center text-xs-plus">
+            {/* <div className="mt-4 text-center text-xs-plus">
               <p className="line-clamp-1">
                 <span>Dont have Account?</span>{" "}
                 <Link
@@ -136,8 +137,8 @@ export default function SignIn() {
                   Create account
                 </Link>
               </p>
-            </div>
-            <div className="my-7 flex items-center space-x-3 text-xs ">
+            </div> */}
+            {/* <div className="my-7 flex items-center space-x-3 text-xs ">
               <div className="h-px flex-1 bg-gray-200 dark:bg-dark-500"></div>
               <p>OR</p>
               <div className="h-px flex-1 bg-gray-200 dark:bg-dark-500"></div>
@@ -159,7 +160,7 @@ export default function SignIn() {
                 />
                 <span>Github</span>
               </Button>
-            </div>
+            </div> */}
           </Card>
           <div className="mt-8 flex justify-center text-xs text-gray-400 dark:text-dark-300">
             <a href="##">Privacy Notice</a>

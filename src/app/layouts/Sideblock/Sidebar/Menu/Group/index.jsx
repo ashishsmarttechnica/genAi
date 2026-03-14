@@ -14,7 +14,7 @@ import { useThemeContext } from "app/contexts/theme/context";
 // ----------------------------------------------------------------------
 
 export function Group({ data }) {
-  const [isOpened, { toggle }] = useDisclosure(true);
+  const [isOpened] = useDisclosure(true);
   // const { t } = useTranslation();
   const { cardSkin } = useThemeContext();
 
@@ -27,7 +27,7 @@ export function Group({ data }) {
         )}
       >
         <button
-          onClick={toggle}
+          // onClick={toggle}
           className="flex cursor-pointer items-center gap-3 pt-2 mb-2 text-xs font-medium uppercase tracking-wider text-gray-500 outline-hidden hover:text-gray-900 focus:text-gray-900 dark:text-dark-300 dark:hover:text-dark-50 dark:focus:text-dark-50"
         >
           <span>{data.title}</span>

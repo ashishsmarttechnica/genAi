@@ -15,9 +15,9 @@ const usersDataReducer = (state = initialState, action) => {
         case "USERS_DATA_SUCCESS":
             {
                 const { page, limit } = action.payload.data.pagination;
-                const { nameOrder, emailOrder, createdAtOrder } = action.payload.sort || {};
+                // const { nameOrder, emailOrder, createdAtOrder } = action.payload.sort || {};
 
-                const cacheKey = `page-${page}-limit-${limit}-sort-${nameOrder || ''}-${emailOrder || ''}-${createdAtOrder || ''}`;
+                const cacheKey = `page-${page}-limit-${limit}`;
                 return {
                     ...state,
                     loading: false,
