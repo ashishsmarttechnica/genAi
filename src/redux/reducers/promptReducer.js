@@ -60,6 +60,7 @@ const PromptReducer = (state = initialState, action) => {
                 }
             });
 
+            
             return {
                 ...state,
                 loading: false,
