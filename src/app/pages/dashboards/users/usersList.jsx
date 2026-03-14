@@ -42,13 +42,13 @@ export default function UsersList() {
 
     const cacheKey = `page-${currentPage}-limit-${currentLimit}`;
 
-    // Basic Caching: Fetch only if data is missing or pagination changed
-    if (cache && cache[cacheKey]) {
-      dispatch({ type: "USERS_DATA_SUCCESS", payload: cache[cacheKey] });
-    } else {
+    // check if we already have the data in store for this page
+    const isDataCached = cache && cache[cacheKey];
+
+    if (!isDataCached) {
       dispatch(getUserDataAction(currentPage, currentLimit));
     }
-  }, [pagination.pageIndex, pagination.pageSize, dispatch]);
+  }, [pagination.pageIndex, pagination.pageSize, cache, dispatch]);
 
 
   // handle sort by column

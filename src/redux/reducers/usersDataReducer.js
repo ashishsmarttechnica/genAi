@@ -15,7 +15,8 @@ const usersDataReducer = (state = initialState, action) => {
         case "USERS_DATA_SUCCESS":
             {
                 const { page, limit } = action.payload.data.pagination;
-                // const { nameOrder, emailOrder, createdAtOrder } = action.payload.sort || {};
+                // The sort parameters are already not included in the cacheKey.
+                // The commented line below is not used for cacheKey generation.
 
                 const cacheKey = `page-${page}-limit-${limit}`;
                 return {
