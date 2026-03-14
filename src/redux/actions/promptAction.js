@@ -1,4 +1,4 @@
-import axiosInstance from "utils/axios";
+import axiosClient from "utils/axios";
 
 export const getPromptAction = (page = 1, limit = 10, search = "", categoryId = "", isLoadMore = false) => {
     return async (dispatch) => {
@@ -9,7 +9,7 @@ export const getPromptAction = (page = 1, limit = 10, search = "", categoryId = 
         }
 
         try {
-            const res = await axiosInstance.get(`/prompt?page=${page}&limit=${limit}&search=${search}&categoryId=${categoryId}`)
+            const res = await axiosClient.get(`/prompt?page=${page}&limit=${limit}&search=${search}&categoryId=${categoryId}`)
 
             if (res && res.data && res.data.success) {
                 if (isLoadMore) {
@@ -44,34 +44,36 @@ export const getPromptAction = (page = 1, limit = 10, search = "", categoryId = 
 
 export const createPromptAction = (promptData, categoryId = "") => {
     return async (dispatch) => {
-        dispatch({type:"PROMPT_DATA_CREATE_LOADING"})
+        dispatch({ type: "PROMPT_DATA_CREATE_LOADING" })
         try {
-            const res = await axiosInstance.post("/prompt",promptData,
-                {headers:{
-                    "Content-Type": "multipart/form-data"
-                }}
+            const res = await axiosClient.post("/prompt", promptData,
+                {
+                    headers: {
+                        "Content-Type": "multipart/form-data"
+                    }
+                }
             )
 
-            if(res && res.data && res.data.success){
-                dispatch({type:"PROMPT_DATA_CREATE_SUCCESS",payload:res.data, meta: { categoryId }})
+            if (res && res.data && res.data.success) {
+                dispatch({ type: "PROMPT_DATA_CREATE_SUCCESS", payload: res.data, meta: { categoryId } })
                 return {
-                    success:true,
-                    message:res.data.message || "prompt created successfully",
-                    data:res.data
+                    success: true,
+                    message: res.data.message || "prompt created successfully",
+                    data: res.data
                 }
             }
-            else{
-                dispatch({type:"PROMPT_DATA_CREATE_ERROR",payload:res.data?.message || "Failed to create prompt"})
+            else {
+                dispatch({ type: "PROMPT_DATA_CREATE_ERROR", payload: res.data?.message || "Failed to create prompt" })
                 return {
-                    success:false,
-                    message:res.data?.message || "Failed to create prompt"
+                    success: false,
+                    message: res.data?.message || "Failed to create prompt"
                 }
             }
         } catch (error) {
-            dispatch({type:"PROMPT_DATA_CREATE_ERROR",payload:error.response?.data?.message})
+            dispatch({ type: "PROMPT_DATA_CREATE_ERROR", payload: error.response?.data?.message })
             return {
-                success:false,
-                message:error.response?.data?.message || "Failed to create prompt"
+                success: false,
+                message: error.response?.data?.message || "Failed to create prompt"
             }
         }
     }
@@ -90,7 +92,7 @@ export const movePromptAction = (categoryId, promptId, newIndex, targetDbIndex, 
             })
 
             // api call (Database index mapping)
-            const res = await axiosInstance.put('/prompt/move', {
+            const res = await axiosClient.put('/prompt/move', {
                 categoryId: categoryId,
                 promptId: promptId,
                 toIndex: targetDbIndex
@@ -131,7 +133,7 @@ export const updatePromptAction = (promptId, promptName, isActive, categoryId = 
             })
 
             // api call (Database index mapping)
-            const res = await axiosInstance.put(`/prompt/${promptId}`, {
+            const res = await axiosClient.put(`/prompt/${promptId}`, {
                 title: promptName,
                 isActive: isActive,
             });

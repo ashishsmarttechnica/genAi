@@ -1,20 +1,13 @@
 import axios from "axios";
 
-export const axiosInstance = axios.create({
+export const axiosClient = axios.create({
     baseURL: import.meta.env.VITE_API_URL,
-    // Vite proxy /api → backend forward karega (no CORS!)
-    // baseURL: '/api',
     withCredentials: true,
-    // headers: {
-    // 'x-api-key': import.meta.env.VITE_API_KEY,
-    // "Content-Type": "application/json",
-    // },
 });
-
 
 let isLoggingOut = false;
 
-axiosInstance.interceptors.request.use(
+axiosClient.interceptors.request.use(
     (config) => {
         const apikey = import.meta.env.VITE_API_KEY;
         if (apikey) {
@@ -29,7 +22,7 @@ axiosInstance.interceptors.request.use(
 
 
 
-axiosInstance.interceptors.response.use(
+axiosClient.interceptors.response.use(
     (response) => {
         return response;
     },
@@ -60,12 +53,13 @@ axiosInstance.interceptors.response.use(
             console.log(`[Auth Error] ${error.response.status} - Initiating logout flow`);
 
             try {
-                localStorage.removeItem("id")
+                localStorage.removeItem("id");
+                // window.location.replace("/login");
             }
             catch (err) {
                 console.error("[Logout Error]", err);
                 isLoggingOut = false;
-                window.location.replace("/");
+                // window.location.replace("/");
             }
 
         }
@@ -76,13 +70,13 @@ axiosInstance.interceptors.response.use(
 
 // Request interceptor: cookie automatically browser send karta hai (withCredentials: true)
 // Koi manual token injection needed nahi hai
-// axiosInstance.interceptors.request.use(
+// axiosClient.interceptors.request.use(
 //     (config) => config,
 //     (error) => Promise.reject(error)
 // );
 
 // Response interceptor: 401 aaye toh logout karo
-// axiosInstance.interceptors.response.use(
+// axiosClient.interceptors.response.use(
 //     (response) => response,
 //     (error) => {
 //         if (error.response?.status === 401) {
@@ -95,4 +89,4 @@ axiosInstance.interceptors.response.use(
 //     }
 // );
 
-export default axiosInstance;
+export default axiosClient;
