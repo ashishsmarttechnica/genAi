@@ -4,7 +4,7 @@ export const getUserDataAction = (page = 1, limit = 10) => {
     return async (dispatch) => {
         dispatch({ type: "USERS_DATA_LOADING" });
         try {
-            const res = await axiosInstance.get(`admin/users?page=${page}&limit=${limit}`)
+            const res = await axiosInstance.get(`/admin/users?page=${page}&limit=${limit}`)
             if (res && res.data && res.data.success) {
                 dispatch({
                     type: "USERS_DATA_SUCCESS",

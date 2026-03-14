@@ -9,7 +9,7 @@ export const getPromptAction = (page = 1, limit = 10, search = "", categoryId = 
         }
 
         try {
-            const res = await axiosInstance.get(`prompt?page=${page}&limit=${limit}&search=${search}&categoryId=${categoryId}`)
+            const res = await axiosInstance.get(`/prompt?page=${page}&limit=${limit}&search=${search}&categoryId=${categoryId}`)
 
             if (res && res.data && res.data.success) {
                 if (isLoadMore) {
@@ -46,7 +46,7 @@ export const createPromptAction = (promptData, categoryId = "") => {
     return async (dispatch) => {
         dispatch({type:"PROMPT_DATA_CREATE_LOADING"})
         try {
-            const res = await axiosInstance.post("prompt",promptData,
+            const res = await axiosInstance.post("/prompt",promptData,
                 {headers:{
                     "Content-Type": "multipart/form-data"
                 }}
@@ -90,7 +90,7 @@ export const movePromptAction = (categoryId, promptId, newIndex, targetDbIndex, 
             })
 
             // api call (Database index mapping)
-            const res = await axiosInstance.put('prompt/move', {
+            const res = await axiosInstance.put('/prompt/move', {
                 categoryId: categoryId,
                 promptId: promptId,
                 toIndex: targetDbIndex
@@ -131,7 +131,7 @@ export const updatePromptAction = (promptId, promptName, isActive, categoryId = 
             })
 
             // api call (Database index mapping)
-            const res = await axiosInstance.put(`prompt/${promptId}`, {
+            const res = await axiosInstance.put(`/prompt/${promptId}`, {
                 title: promptName,
                 isActive: isActive,
             });

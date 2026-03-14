@@ -3,7 +3,7 @@ import axiosInstance from "utils/axios";
 export const loginAdmin = (data) => {
     return async (dispatch) => {
         try {
-            const response = await axiosInstance.post("admin/login",
+            const response = await axiosInstance.post("/admin/login",
                 {
                     email: data.email,
                     password: data.password

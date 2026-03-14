@@ -6,7 +6,7 @@ export const getCategoryDataAction = (page = 1, limit = 10) => {
         dispatch({ type: "CATEGORY_DATA_LOADING" });
 
         try {
-            const res = await axiosInstance.get(`category/get-all?page=${page}&limit=${limit}`);
+            const res = await axiosInstance.get(`/category/get-all?page=${page}&limit=${limit}`);
             // console.log(res, "res Data ");
 
             if (res && res.data && res.data.success) {
@@ -41,7 +41,7 @@ export const createCategory = (categoryName) => {
         dispatch({ type: "CATEGORY_DATA_MUTATION_LOADING" });
 
         try {
-            const res = await axiosInstance.post("category/create", { name: categoryName });
+            const res = await axiosInstance.post("/category/create", { name: categoryName });
 
             if (res && res.data && res.data.success) {
                 dispatch({ type: "CATEGORY_DATA_CREATE", payload: { data: res.data } });
@@ -74,7 +74,7 @@ export const deleteCategory = (categoryId) => {
         dispatch({ type: "CATEGORY_DATA_MUTATION_LOADING" });
 
         try {
-            const res = await axiosInstance.delete(`category/delete/${categoryId}`);
+            const res = await axiosInstance.delete(`/category/delete/${categoryId}`);
 
             if (res && res.data && res.data.success) {
                 dispatch({ type: "CATEGORY_DATA_DELETE", payload: { data: res.data, categoryId } });
@@ -114,7 +114,7 @@ export const moveCategoryDataAction = (categoryId, toIndex) => {
             })
 
             // api call
-            const res = await axiosInstance.put('category/move', {
+            const res = await axiosInstance.put('/category/move', {
                 categoryId: categoryId,
                 toIndex: toIndex
             });
@@ -154,7 +154,7 @@ export const updateCategoryDataAction = (categoryId, categoryName, isActive) => 
             })
 
             // api call
-            const res = await axiosInstance.put(`category/update/${categoryId}`, {
+            const res = await axiosInstance.put(`/category/update/${categoryId}`, {
                 categoryName: categoryName,
                 isActive: isActive
             });
