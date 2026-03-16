@@ -8,7 +8,7 @@ const CategoryRow = ({ index, style, data }) => {
     const item = data[index];
     return (
         <div style={style} className="px-2 border-b border-gray-100/10">
-            <CategoryTableRow category={item} />
+            <CategoryTableRow key={item._id || item.id} category={item} />
         </div>
     );
 };

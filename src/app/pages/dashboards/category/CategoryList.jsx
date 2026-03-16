@@ -79,7 +79,8 @@ export default function CategoryList() {
   const filtterData = data?.categories?.filter((item) => {
     if (!search) return true;
     const itemName = item?.name?.toLowerCase() || "";
-    return itemName.includes(search.toLowerCase());
+    const isActive = item?.isActive?.toString().toLowerCase() || "";
+    return itemName.includes(search.toLowerCase()) || isActive.includes(search.toLowerCase());
   }) || [];
 
   const sortedAndFilteredData = useMemo(() => {

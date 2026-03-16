@@ -13,7 +13,6 @@ import { ConfirmModal } from 'components/shared/ConfirmModal';
 export function CategoryTableRow({ category }) {
     const navigate = useNavigate()
     const dispatch = useDispatch()
-    const [isActive, setIsActive] = useState(category.isActive);
     const [showDeleteModal, setShowDeleteModal] = useState(false);
     const [deleteLoading, setDeleteLoading] = useState(false);
 
@@ -51,7 +50,6 @@ export function CategoryTableRow({ category }) {
     };
 
     const handleStatusChange = async (checked) => {
-        setIsActive(checked);
         const response = await dispatch(updateCategoryDataAction(category._id || category.id, category.name, checked));
         // console.log(response, "response");
         if (response?.success) {
@@ -84,7 +82,7 @@ export function CategoryTableRow({ category }) {
             <div className="flex-1 p-4 font-semibold text-center">{category.promptCount || 0}</div>
 
             <div className="flex-1 p-4 font-semibold text-center">
-                <Switch variant="outlined" checked={isActive} label={isActive ? "Active" : "Inactive"} onChange={(e) => handleStatusChange(e.target.checked)} />
+                <Switch variant="outlined" checked={category.isActive} label={category.isActive ? "Active" : "Inactive"} onChange={(e) => handleStatusChange(e.target.checked)} />
             </div>
 
             <div className="flex-1 p-4 font-semibold text-center">

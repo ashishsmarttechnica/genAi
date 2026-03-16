@@ -1,5 +1,5 @@
 import PromptCard from './PromptCard'
-import { useEffect, useState, useCallback } from 'react'
+import { useEffect, useState, useCallback, useMemo } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import { useSearchParams } from 'react-router-dom'
 import { getPromptAction, movePromptAction } from 'redux/actions/promptAction'
@@ -11,6 +11,10 @@ import { Button } from 'components/ui';
 import { createPromptAction } from 'redux/actions/promptAction';
 import { getCategoryDataAction } from 'redux/actions/categoryDataAction';
 import PromptCreateModal from './PromptCreateModal';
+import { CollapsibleSearch } from "components/shared/CollapsibleSearch";
+import { ArrowPathIcon } from "@heroicons/react/24/outline";
+import clsx from "clsx";
+
 
 export default function PromptList() {
 
@@ -21,6 +25,8 @@ export default function PromptList() {
     const [page, setPage] = useState(1)
     const { cache, loading, loadingMore } = useSelector((state) => state.prompt || { cache: {}, loading: false, loadingMore: false, error: null })
     const { data: categoryData } = useSelector((state) => state.categoryData || { data: { categories: [] } })
+
+    const [search, setSearch] = useState("");
 
     const [showModal, setShowModal] = useState(false);
     const [createLoading, setCreateLoading] = useState(false);
@@ -45,6 +51,31 @@ export default function PromptList() {
         }),
         useSensor(KeyboardSensor)
     )
+
+    // Filter prompts based on search
+    const filteredCategories = useMemo(() => {
+        if (!promptsData?.categories) return [];
+        if (!search) return promptsData.categories;
+
+        const searchTerm = search.toLowerCase();
+
+        return promptsData.categories.map(category => {
+            const matchingPrompts = category.prompts.filter(prompt => {
+                const title = prompt.title?.toLowerCase() || "";
+                const readyMatePrompt = prompt.readyMatePrompt?.toLowerCase() || "";
+                const isActive = prompt.isActive?.toString().toLowerCase() || "";
+
+                return title.includes(searchTerm) ||
+                    readyMatePrompt.includes(searchTerm) ||
+                    isActive.includes(searchTerm);
+            });
+
+            return {
+                ...category,
+                prompts: matchingPrompts
+            };
+        }).filter(category => category.prompts.length > 0);
+    }, [promptsData, search]);
 
     const handleDragEnd = (event) => {
         const { active, over } = event;
@@ -79,6 +110,16 @@ export default function PromptList() {
             }
         }
     };
+
+
+    // handle refresh
+    const handleRefresh = async () => {
+        setPage(1);
+        const initialLimit = categoryId ? 10 : 2;
+        dispatch(getPromptAction(1, initialLimit, "", categoryId, false));
+    };
+
+
 
     useEffect(() => {
         if (!categoryData?.categories?.length) {
@@ -161,102 +202,121 @@ export default function PromptList() {
     return (
         <>
             <div className="flex flex-col gap-6 w-full mx-auto relative mb-10">
+                {/* Premium Sticky Header matching Navbar styling */}
+                <div className='sticky top-16.25 z-20 py-4 px-5 sm:px-6 backdrop-blur-sm backdrop-saturate-150 bg-white/80 dark:bg-dark-900/80 border-b border-gray-200 dark:border-dark-600 flex items-center justify-between transition-all'>
+                    <div className="flex items-center justify-between w-full gap-3 sm:gap-4">
+                        <div className="flex items-center gap-3 sm:gap-4">
+                            <div className="h-8 w-2 sm:h-10 sm:w-2.5 bg-linear-to-b from-primary-400 to-primary-600 rounded-full shadow-sm"></div>
+                            <h2 className='text-xl sm:text-2xl md:text-3xl font-bold tracking-tight text-gray-900 dark:text-white drop-shadow-sm'>
+                                {categoryId && filteredCategories.length === 1
+                                    ? filteredCategories[0].name
+                                    : "All Prompts"
+                                }
+                            </h2>
+                        </div>
+                        <div className='flex gap-3'>
+                            <div className="flex">
+                                <CollapsibleSearch
+                                    placeholder="Search here..."
+                                    value={search ?? ""}
+                                    onChange={(e) => setSearch(e.target.value)}
+                                />
+                            </div>
+                            <div className="flex">
+                                <Button
+                                    variant="outlined"
+                                    className="p-2"
+                                    onClick={handleRefresh}
+                                    disabled={loading}
+                                >
+                                    <ArrowPathIcon className={clsx("size-5", loading && "animate-spin")} />
+                                </Button>
+                            </div>
+                            <div className={`flex justify-end ${categoryId ? 'mb-5' : ''}`} >
+                                <Button variant="filled" onClick={() => setShowModal(true)}>Create Prompt</Button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
                 {
                     loading ? (
                         <div className='flex justify-center items-center h-full min-h-[300px]'>
                             <div className='animate-spin rounded-full h-12 w-12 border-4 border-primary-500 border-t-transparent'></div>
                         </div>
-                    ) : promptsData?.categories && promptsData.categories.length > 0 ? (
-
-                        <>
-                            {/* Premium Sticky Header matching Navbar styling */}
-                            <div className='sticky top-16.25 z-20 py-4 px-5 sm:px-6 backdrop-blur-sm backdrop-saturate-150 bg-white/80 dark:bg-dark-900/80 border-b border-gray-200 dark:border-dark-600 flex items-center justify-between transition-all'>
-                                <div className="flex items-center gap-3 sm:gap-4">
-                                    <div className="h-8 w-2 sm:h-10 sm:w-2.5 bg-linear-to-b from-primary-400 to-primary-600 rounded-full shadow-sm"></div>
-                                    <h2 className='text-xl sm:text-2xl md:text-3xl font-bold tracking-tight text-gray-900 dark:text-white drop-shadow-sm'>
-                                        {categoryId && promptsData.categories.length === 1
-                                            ? promptsData.categories[0].name
-                                            : "All Prompts"
-                                        }
-                                        {console.log(promptsData.categories[0].name, "category name")}
-                                    </h2>
-                                </div>
-                            </div>
-
-                            <div className='px-4'>
-                                <div className={`flex justify-end ${categoryId ? 'mb-5' : ''}`} >
-                                    <Button variant="filled" onClick={() => setShowModal(true)}>Create Prompt</Button>
-                                </div>
-                                <DndContext
-                                    sensors={sensors}
-                                    collisionDetection={closestCenter}
-                                    onDragEnd={handleDragEnd}
-                                >
-                                    <SortableContext
-                                        items={promptsData.categories.flatMap((category) => (
-                                            category.prompts.map((prompt) => (prompt._id || prompt.id))
-                                        ))}
-                                        strategy={rectSortingStrategy}
-                                    >
-                                        <div className='flex flex-col gap-10'>
-                                            {promptsData.categories.map((category) => (
-                                                <div
-                                                    key={category._id || category.id}
-                                                    className='category-section-observer scroll-mt-24'
-                                                    data-category-name={category.name}
-                                                >
-                                                    {/* Category Title Header */}
-                                                    {(!categoryId || promptsData.categories.length > 1) && (
-                                                        <div className="mb-5 flex items-center gap-3 border-b border-gray-200 dark:border-dark-700 pb-3">
-                                                            <div className="flex items-center gap-2">
-                                                                <div className="w-2.5 h-2.5 rounded-full bg-primary-500 border border-primary-200 dark:border-primary-800"></div>
-                                                                <h3 className="text-lg md:text-2xl font-bold text-gray-800 dark:text-white tracking-wide">
-                                                                    {category.name}
-                                                                </h3>
-                                                            </div>
-                                                            <span className="text-xs font-semibold text-primary-600 dark:text-primary-400 bg-primary-50 dark:bg-primary-900/30 px-2.5 py-1 rounded-full border border-primary-100 dark:border-primary-800">
-                                                                {category.prompts.length} Prompts
-                                                            </span>
-                                                        </div>
-                                                    )}
-
-                                                    {category.prompts.length > 0 ? (
-                                                        <div className='grid grid-cols-1 xl:grid-cols-2 gap-6'>
-                                                            {category.prompts.map((prompt, idx) => (
-                                                                <PromptCard key={prompt._id || prompt.id} prompt={prompt} index={idx} categoryId={categoryId} />
-                                                            ))}
-                                                        </div>
-                                                    ) : (
-                                                        <div className="py-10 flex flex-col items-center justify-center text-gray-500 dark:text-gray-400 bg-gray-50/50 dark:bg-dark-800/30 rounded-xl border border-dashed border-gray-200 dark:border-dark-700">
-                                                            <p className="font-medium text-sm">No prompts available in this category.</p>
-                                                        </div>
-                                                    )}
-                                                </div>
-                                            ))}
-                                        </div>
-                                    </SortableContext>
-                                </DndContext>
-                            </div>
-                            {/* {console.log(promptsData, "promptsData")} */}
-
-                            {/* Infinite Scroll Observer Target & Loading State */}
-                            <div ref={lastElementRef} className="py-4 w-full flex justify-center">
-                                {loadingMore && (
-                                    <div className='flex items-center justify-center gap-2 text-primary-500'>
-                                        <div className='animate-spin rounded-full h-6 w-6 border-2 border-primary-500 border-t-transparent'></div>
-                                        <span className="text-sm font-medium">Loading more prompts...</span>
-                                    </div>
-                                )}
-                            </div>
-
-                        </ >
-
-                    ) : (
-                        <div className='flex flex-col justify-center items-center h-full min-h-[300px] text-gray-500 dark:text-gray-400'>
-                            <p className="text-lg font-medium">No prompts found</p>
-                            {categoryId && <p className="text-sm mt-1">Try selecting a different category</p>}
-                        </div>
                     )
+                        : filteredCategories.length === 0 ? (
+                            <div className='flex flex-col justify-center items-center h-full min-h-[300px] text-gray-500 dark:text-gray-400'>
+                                <p className="text-lg font-medium">No prompts found</p>
+                                {categoryId && <p className="text-sm mt-1">Try selecting a different category</p>}
+                            </div>
+                        ) : (
+                            <>
+                                <div className='px-4'>
+                                    <DndContext
+                                        sensors={sensors}
+                                        collisionDetection={closestCenter}
+                                        onDragEnd={handleDragEnd}
+                                    >
+                                        <SortableContext
+                                            items={filteredCategories.flatMap((category) => (
+                                                category.prompts.map((prompt) => (prompt._id || prompt.id))
+                                            ))}
+                                            strategy={rectSortingStrategy}
+                                        >
+                                            <div className='flex flex-col gap-10'>
+                                                {filteredCategories.map((category) => (
+                                                    <div
+                                                        key={category._id || category.id}
+                                                        className='category-section-observer scroll-mt-24'
+                                                        data-category-name={category.name}
+                                                    >
+                                                        {/* Category Title Header */}
+                                                        {(!categoryId || promptsData.categories.length > 1) && (
+                                                            <div className="mb-5 flex items-center gap-3 border-b border-gray-200 dark:border-dark-700 pb-3">
+                                                                <div className="flex items-center gap-2">
+                                                                    <div className="w-2.5 h-2.5 rounded-full bg-primary-500 border border-primary-200 dark:border-primary-800"></div>
+                                                                    <h3 className="text-lg md:text-2xl font-bold text-gray-800 dark:text-white tracking-wide">
+                                                                        {category.name}
+                                                                    </h3>
+                                                                </div>
+                                                                <span className="text-xs font-semibold text-primary-600 dark:text-primary-400 bg-primary-50 dark:bg-primary-900/30 px-2.5 py-1 rounded-full border border-primary-100 dark:border-primary-800">
+                                                                    {category.prompts.length} Prompts
+                                                                </span>
+                                                            </div>
+                                                        )}
+
+                                                        {category.prompts.length > 0 ? (
+                                                            <div className='grid grid-cols-1 xl:grid-cols-2 gap-6'>
+                                                                {category.prompts.map((prompt, idx) => (
+                                                                    <PromptCard key={prompt._id || prompt.id} prompt={prompt} index={idx} categoryId={categoryId} />
+                                                                ))}
+                                                            </div>
+                                                        ) : (
+                                                            <div className="py-10 flex flex-col items-center justify-center text-gray-500 dark:text-gray-400 bg-gray-50/50 dark:bg-dark-800/30 rounded-xl border border-dashed border-gray-200 dark:border-dark-700">
+                                                                <p className="font-medium text-sm">No prompts available in this category.</p>
+                                                            </div>
+                                                        )}
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        </SortableContext>
+                                    </DndContext>
+                                </div>
+                                {/* {console.log(promptsData, "promptsData")} */}
+
+                                {/* Infinite Scroll Observer Target & Loading State */}
+                                <div ref={lastElementRef} className="py-4 w-full flex justify-center">
+                                    {loadingMore && (
+                                        <div className='flex items-center justify-center gap-2 text-primary-500'>
+                                            <div className='animate-spin rounded-full h-6 w-6 border-2 border-primary-500 border-t-transparent'></div>
+                                            <span className="text-sm font-medium">Loading more prompts...</span>
+                                        </div>
+                                    )}
+                                </div>
+
+                            </ >
+
+                        )
 
                 }
 
