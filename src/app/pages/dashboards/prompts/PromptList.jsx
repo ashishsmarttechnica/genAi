@@ -10,10 +10,12 @@ import useInfiniteScroll from 'hooks/useInfiniteScroll';
 import { Button } from 'components/ui';
 import { createPromptAction } from 'redux/actions/promptAction';
 import { getCategoryDataAction } from 'redux/actions/categoryDataAction';
-import PromptCreateModal from './PromptCreateModal';
+import PromptModal from './PromptModal';
 import { CollapsibleSearch } from "components/shared/CollapsibleSearch";
 import { ArrowPathIcon } from "@heroicons/react/24/outline";
 import clsx from "clsx";
+import { ConfirmModal } from 'components/shared/ConfirmModal';
+import { deletePromptAction, updatePromptAction } from 'redux/actions/promptAction';
 
 
 export default function PromptList() {
@@ -39,6 +41,21 @@ export default function PromptList() {
         thumbnail: null
     });
 
+    // Edit/Delete centralized state
+    const [showEditModal, setShowEditModal] = useState(false);
+    const [showDeleteModal, setShowDeleteModal] = useState(false);
+    const [selectedPrompt, setSelectedPrompt] = useState(null);
+    const [editLoading, setEditLoading] = useState(false);
+    const [deleteLoading, setDeleteLoading] = useState(false);
+    const [editFormData, setEditFormData] = useState({
+        title: "",
+        readyMatePrompt: "",
+        instructions: "",
+        categoryIds: "",
+        isActive: true,
+        thumbnail: ""
+    });
+
     // Derive the active dataset from cache dictionary
     const cacheKey = categoryId || 'ALL';
     const promptsData = cache[cacheKey];
@@ -62,11 +79,11 @@ export default function PromptList() {
         return promptsData.categories.map(category => {
             const matchingPrompts = category.prompts.filter(prompt => {
                 const title = prompt.title?.toLowerCase() || "";
-                const readyMatePrompt = prompt.readyMatePrompt?.toLowerCase() || "";
+                // const readyMatePrompt = prompt.readyMatePrompt?.toLowerCase() || "";
                 const isActive = prompt.isActive?.toString().toLowerCase() || "";
 
                 return title.includes(searchTerm) ||
-                    readyMatePrompt.includes(searchTerm) ||
+                    // readyMatePrompt.includes(searchTerm) ||
                     isActive.includes(searchTerm);
             });
 
@@ -112,39 +129,40 @@ export default function PromptList() {
     };
 
 
-    // handle refresh
-    const handleRefresh = async () => {
-        setPage(1);
-        const initialLimit = categoryId ? 10 : 2;
-        dispatch(getPromptAction(1, initialLimit, "", categoryId, false));
-    };
-
-
-
+    // Main Fetch Effect: Only runs if data is missing for the current category
     useEffect(() => {
-        if (!categoryData?.categories?.length) {
-            dispatch(getCategoryDataAction(1, 100)); // Fetch all for dropdown
-        }
-    }, [dispatch, categoryData]);
-
-    useEffect(() => {
-        // Since Redux now maintains a dictionary `cache[categoryId]`, 
-        // we only fetch if `promptsData` is completely undefined for this key.
         if (!promptsData && !loading) {
             setPage(1);
             const initialLimit = categoryId ? 10 : 2;
-            dispatch(getPromptAction(1, initialLimit, "", categoryId, false));
+            dispatch(getPromptAction(1, initialLimit, categoryId, false));
         }
         else if (promptsData && promptsData.pagination) {
             // Restore actual page tracking when coming from cache
             setPage(promptsData.pagination.page);
         }
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [categoryId, promptsData, dispatch])
+    }, [categoryId, promptsData, dispatch]);
 
+    // Set up edit form data when a prompt is selected for editing
+    useEffect(() => {
+        if (selectedPrompt && showEditModal) {
+            setEditFormData({
+                title: selectedPrompt.title || '',
+                readyMatePrompt: selectedPrompt.readyMatePrompt || '',
+                instructions: selectedPrompt.instructions || '',
+                categoryIds: selectedPrompt.categoryIds || (selectedPrompt.categories?.[0]?._id || selectedPrompt.categories?.[0]?.id || ''),
+                isActive: selectedPrompt.isActive ?? true,
+                thumbnail: selectedPrompt.thumbnail || ''
+            });
+        }
+    }, [selectedPrompt, showEditModal]);
+
+    // handle create prompt
     const handleCreatePrompt = async () => {
-        // Debugging logs to see what's missing
         // console.log("Form Data on Submit:", formData);
+        if (!categoryData?.categories?.length) {
+            dispatch(getCategoryDataAction(1)); // Fetch all for dropdown
+        }
 
         if (!formData.title || !formData.instructions || !formData.thumbnail || !formData.categoryIds || !formData.readyMatePrompt) {
             toast.error("Please fill all required fields");
@@ -184,18 +202,75 @@ export default function PromptList() {
         }
     };
 
+    const handleEditClick = (prompt) => {
+        setSelectedPrompt(prompt);
+        setShowEditModal(true);
+    };
+
+    const handleDeleteClick = (prompt) => {
+        setSelectedPrompt(prompt);
+        setShowDeleteModal(true);
+    };
+
+    const handleUpdatePrompt = async () => {
+        if (!selectedPrompt) return;
+        setEditLoading(true);
+        const res = await dispatch(updatePromptAction(selectedPrompt._id || selectedPrompt.id, editFormData, categoryId));
+        setEditLoading(false);
+        if (res?.success) {
+            toast.success("Prompt updated successfully");
+            setShowEditModal(false);
+            setSelectedPrompt(null);
+        } else {
+            toast.error(res?.message || "Failed to update prompt");
+        }
+    };
+
+    const handleDeletePromptConfirm = async () => {
+        if (!selectedPrompt) return;
+        setDeleteLoading(true);
+        const res = await dispatch(deletePromptAction(selectedPrompt._id || selectedPrompt.id, categoryId));
+        setDeleteLoading(false);
+        if (res?.success) {
+            toast.success("Prompt deleted successfully");
+            setShowDeleteModal(false);
+            setSelectedPrompt(null);
+        } else {
+            toast.error(res?.message || "Failed to delete prompt");
+        }
+        setDeleteLoading(false);
+    }
+
+    // handle refresh
+    const handleRefresh = async () => {
+        setPage(1);
+        const initialLimit = categoryId ? 10 : 2;
+        dispatch(getPromptAction(1, initialLimit, categoryId, false));
+    };
+
+    // category modal is open then fetch category data
+    useEffect(() => {
+        if (!categoryData?.categories?.length && showModal === true) {
+            dispatch(getCategoryDataAction(1)); // Fetch all for dropdown
+        }
+    }, [dispatch, categoryData, showModal]);
+
     const handleLoadMore = useCallback(() => {
+        // Strict guard: No more requests if loading OR if it's an active search
+        if (loading || loadingMore || search) return;
+        
         const nextPage = page + 1
         setPage(nextPage)
 
-        // Infinite scroll pe bhi dynamic limit
+        // As per user request, search is client-side only, so we fetch unfiltered next-page
         const scrollLimit = categoryId ? 10 : 1;
-        dispatch(getPromptAction(nextPage, scrollLimit, "", categoryId, true))
-    }, [page, categoryId, dispatch])
+        dispatch(getPromptAction(nextPage, scrollLimit, categoryId, true))
+    }, [page, categoryId, search, dispatch, loading, loadingMore])
 
     const lastElementRef = useInfiniteScroll({
         loading: loading || loadingMore,
-        hasMore: promptsData?.pagination?.page < promptsData?.pagination?.pages,
+        // hasMore is FALSE when searching to prevent background request loops
+        hasMore: (promptsData?.pagination?.page < promptsData?.pagination?.pages) && !search && !loadingMore && !loading,
         onLoadMore: handleLoadMore
     })
 
@@ -222,17 +297,15 @@ export default function PromptList() {
                                     onChange={(e) => setSearch(e.target.value)}
                                 />
                             </div>
-                            <div className="flex">
-                                <Button
-                                    variant="outlined"
-                                    className="p-2"
-                                    onClick={handleRefresh}
-                                    disabled={loading}
-                                >
-                                    <ArrowPathIcon className={clsx("size-5", loading && "animate-spin")} />
-                                </Button>
-                            </div>
-                            <div className={`flex justify-end ${categoryId ? 'mb-5' : ''}`} >
+                            <Button
+                                variant="outlined"
+                                className="p-2"
+                                onClick={handleRefresh}
+                                disabled={loading}
+                            >
+                                <ArrowPathIcon className={clsx("size-5", loading && "animate-spin")} />
+                            </Button>
+                            <div className="flex justify-end">
                                 <Button variant="filled" onClick={() => setShowModal(true)}>Create Prompt</Button>
                             </div>
                         </div>
@@ -288,7 +361,14 @@ export default function PromptList() {
                                                         {category.prompts.length > 0 ? (
                                                             <div className='grid grid-cols-1 xl:grid-cols-2 gap-6'>
                                                                 {category.prompts.map((prompt, idx) => (
-                                                                    <PromptCard key={prompt._id || prompt.id} prompt={prompt} index={idx} categoryId={categoryId} />
+                                                                    <PromptCard
+                                                                        key={prompt._id || prompt.id}
+                                                                        prompt={prompt}
+                                                                        index={idx}
+                                                                        categoryId={categoryId}
+                                                                        onEdit={() => handleEditClick(prompt)}
+                                                                        onDelete={() => handleDeleteClick(prompt)}
+                                                                    />
                                                                 ))}
                                                             </div>
                                                         ) : (
@@ -322,7 +402,9 @@ export default function PromptList() {
 
             </div >
 
-            <PromptCreateModal
+            <PromptModal
+                title="Create New Prompt"
+                confirmText="Create"
                 showModal={showModal}
                 setShowModal={setShowModal}
                 createLoading={createLoading}
@@ -330,6 +412,33 @@ export default function PromptList() {
                 setFormData={setFormData}
                 handleCreatePrompt={handleCreatePrompt}
                 categoryData={categoryData}
+            />
+
+            <PromptModal
+                title="Edit Prompt"
+                confirmText="Update"
+                showModal={showEditModal}
+                setShowModal={setShowEditModal}
+                createLoading={editLoading}
+                formData={editFormData}
+                setFormData={setEditFormData}
+                handleCreatePrompt={handleUpdatePrompt}
+                categoryData={categoryData}
+            />
+
+            <ConfirmModal
+                show={showDeleteModal}
+                onClose={() => setShowDeleteModal(false)}
+                onOk={handleDeletePromptConfirm}
+                confirmLoading={deleteLoading}
+                state="pending"
+                messages={{
+                    pending: {
+                        title: "Delete Prompt",
+                        description: `Are you sure you want to delete "${selectedPrompt?.title}"? This action cannot be undone.`,
+                        actionText: "Delete",
+                    }
+                }}
             />
 
         </>

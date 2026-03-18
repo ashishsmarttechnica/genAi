@@ -182,7 +182,7 @@ export default function CategoryList() {
               {/* Professional Sticky Header */}
               <div className="flex items-center bg-gray-50/80 dark:bg-dark-800/80 backdrop-blur-md sticky top-0 z-10 p-4 border-b border-gray-200 dark:border-dark-700 text-xs font-bold uppercase tracking-widest text-gray-500 dark:text-white" >
                 <div className="w-26 text-center"></div>
-                <div className="flex-1 font-semibold">index
+                <div className="w-24 font-semibold">index
                   <button
                     onClick={() => handleSort("index")}
                     className="ml-2"
@@ -215,8 +215,9 @@ export default function CategoryList() {
                   </button>
                 </div>
                 <div className="flex-1 font-semibold">Status</div>
-                <div className="flex-1 font-semibold">Action</div>
-                <div className="flex-1 font-semibold">Delete</div>
+                <div className="w-24 font-semibold">Action</div>
+                <div className="w-24 font-semibold">Edit</div>
+                <div className="w-24 font-semibold">Delete</div>
               </div >
               <div className="table-wrapper min-w-full overflow-x-auto">
                 <DndContext
@@ -228,7 +229,9 @@ export default function CategoryList() {
                     items={sortedAndFilteredData.map(c => c._id || c.id)}
                     strategy={verticalListSortingStrategy}
                   >
+
                     <ListComponent categories={sortedAndFilteredData} />
+
                   </SortableContext>
                 </DndContext>
               </div>

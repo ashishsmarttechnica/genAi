@@ -6,43 +6,49 @@ import {
   PresentationChartBarIcon,
   UsersIcon,
 } from "@heroicons/react/24/outline";
+import { useSelector, useDispatch } from "react-redux";
+import { useEffect } from "react";
 
 // Local Imports
 import { Avatar, Card } from "components/ui";
+import { getCount } from "redux/actions/CountAction";
 
 // ----------------------------------------------------------------------
 
 export function Overview() {
+  const dispatch = useDispatch();
+  const { count: counts, loading } = useSelector((state) => state.count);
+
+  useEffect(() => {
+    if (!counts && !loading) {
+      dispatch(getCount());
+    }
+  }, []);
+
+
   return (
     <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 sm:gap-5 lg:grid-cols-4 lg:gap-6">
       <Card className="flex justify-between p-5">
         <div>
-          <p>Sales</p>
+          <p>Categories</p>
           <p className="this:info mt-0.5 text-2xl font-medium text-this dark:text-this-lighter">
-            6.5k
+            {counts?.categoryCount || 0}
           </p>
           <p className="this:success mt-3 flex items-center gap-1 text-this dark:text-this-lighter">
             <ArrowUpIcon className="size-4" />
-            <span>4.3%</span>
+            <span>10%</span>
           </p>
         </div>
-        <Avatar
-          size={12}
-          classNames={{
-            display: "mask is-squircle rounded-none",
-          }}
-          initialVariant="soft"
-          initialColor="info"
-        >
+        <div className="flex size-12 items-center justify-center rounded-xl bg-this/10 text-this dark:bg-this-lighter/20 dark:text-this-lighter">
           <PresentationChartBarIcon className="size-6" />
-        </Avatar>
+        </div>
       </Card>
 
       <Card className="flex justify-between p-5">
         <div>
-          <p>Customers</p>
+          <p>prompts</p>
           <p className="this:warning mt-0.5 text-2xl font-medium text-this dark:text-this-lighter">
-            12k
+            {counts?.promptsCount || 0}
           </p>
           <p className="this:success mt-3 flex items-center gap-1 text-this dark:text-this-lighter">
             <ArrowUpIcon className="size-4" />
@@ -63,9 +69,9 @@ export function Overview() {
 
       <Card className="flex justify-between p-5">
         <div>
-          <p>Products</p>
+          <p>users</p>
           <p className="this:success mt-0.5 text-2xl font-medium text-this dark:text-this-lighter">
-            47k
+            {counts?.usersCount || 0}
           </p>
           <p className="this:success mt-3 flex items-center gap-1 text-this dark:text-this-lighter">
             <ArrowUpIcon className="size-4" />

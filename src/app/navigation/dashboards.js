@@ -8,6 +8,7 @@ import { NAV_TYPE_ROOT, NAV_TYPE_ITEM } from 'constants/app.constant';
 import { getDashboardPath } from 'utils/urlUtils';
 import UserIcon from 'assets/nav-icons/user.svg?react';
 import DocumentEditIcon from 'assets/nav-icons/document.svg?react'
+import OnboardingIcon from 'assets/nav-icons/onboarding.svg?react'
 
 // ----------------------------------------------------------------------
 
@@ -55,6 +56,14 @@ export const getDashboardsNavigation = () => ({
             title: 'Users',
             transKey: 'nav.dashboards.users',
             Icon: UserIcon,
+        },
+        {
+            id: 'dashboards.carousel',
+            path: getDashboardPath('carousel'),
+            type: NAV_TYPE_ITEM,
+            title: 'Carousel',
+            transKey: 'nav.dashboards.carousel',
+            Icon: OnboardingIcon,
         }
     ],
 });

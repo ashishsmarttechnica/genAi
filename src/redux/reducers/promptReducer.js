@@ -39,17 +39,17 @@ const PromptReducer = (state = initialState, action) => {
         case "PROMPT_DATA_CREATE_SUCCESS": {
             // const cacheKey = action.meta.categoryId || 'ALL';
             const newPrompt = action.payload.data; // Assuming action.payload.data is the new prompt object
-            
+
             // We need to update ALL cache entries that might contain this prompt's category
             const updatedCache = { ...state.cache };
-            
+
             Object.keys(updatedCache).forEach(key => {
                 const cacheData = { ...updatedCache[key] };
                 if (cacheData.categories) {
-                    const categoryIndex = cacheData.categories.findIndex(c => 
+                    const categoryIndex = cacheData.categories.findIndex(c =>
                         (c._id || c.id) === (newPrompt.category?._id || newPrompt.category?.id || newPrompt.category || action.meta.categoryId)
                     );
-                    
+
                     if (categoryIndex !== -1) {
                         const updatedCategories = [...cacheData.categories];
                         const category = { ...updatedCategories[categoryIndex] };
@@ -60,7 +60,7 @@ const PromptReducer = (state = initialState, action) => {
                 }
             });
 
-            
+
             return {
                 ...state,
                 loading: false,
@@ -221,6 +221,29 @@ const PromptReducer = (state = initialState, action) => {
                     [cacheKey]: action.payload.data
                 }
             };
+        }
+        case "PROMPT_DATA_DELETE": {
+            const { promptId, cacheKey: metaCacheKey } = action.payload;
+            const cacheKey = metaCacheKey || 'ALL';
+
+            const targetData = state.cache[cacheKey];
+            if (!targetData || !targetData.categories) return state;
+
+            const updatedCategories = targetData.categories.map(category => ({
+                ...category,
+                prompts: category.prompts.filter(prompt => (prompt._id || prompt.id) !== promptId)
+            }));
+
+            return {
+                ...state,
+                cache: {
+                    ...state.cache,
+                    [cacheKey]: {
+                        ...targetData,
+                        categories: updatedCategories
+                    }
+                }
+            }
         }
         default:
             return state;

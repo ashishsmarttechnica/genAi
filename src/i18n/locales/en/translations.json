@@ -5,7 +5,8 @@
       "sales":"Sales",
       "category":"Category",
       "prompts":"Prompts",
-      "users":"Users"
+      "users":"Users",
+      "carousel":"Carousel"
     },
     "settings": {
       "settings": "Settings",

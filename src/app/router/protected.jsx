@@ -50,6 +50,12 @@ const protectedRoutes = {
               lazy: async () => ({
                 Component: (await import("app/pages/dashboards/users")).default,
               }),
+            },
+            {
+              path: "carousel",
+              lazy: async () => ({
+                Component: (await import("app/pages/dashboards/carousel")).default,
+              }),
             }
           ],
         },

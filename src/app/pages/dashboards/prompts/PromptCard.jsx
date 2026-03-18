@@ -1,18 +1,18 @@
-import { useState } from 'react'
+import { useState, memo } from 'react'
 import { Card } from 'components/ui/Card'
 import { useSortable } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
-import { EllipsisVerticalIcon } from "@heroicons/react/24/outline"
+import { EllipsisVerticalIcon, Square2StackIcon, CheckIcon, TrashIcon, PencilSquareIcon } from "@heroicons/react/24/outline"
 import { Switch } from "components/ui";
 import { useDispatch } from 'react-redux';
 import { updatePromptAction } from 'redux/actions/promptAction';
 import { toast } from "sonner";
-import { Square2StackIcon, CheckIcon } from "@heroicons/react/24/outline"
 
-
-export default function PromptCard({ prompt, index, categoryId }) {
+const PromptCard = memo(function PromptCard({ prompt, index, categoryId, onEdit, onDelete }) {
   const [copied, setCopied] = useState(false)
   const dispatch = useDispatch()
+
+  // dnd kit
   const {
     attributes,
     listeners,
@@ -21,7 +21,8 @@ export default function PromptCard({ prompt, index, categoryId }) {
     transition,
     isDragging
   } = useSortable({ id: prompt._id || prompt.id })
-
+  
+  // style for dnd kit
   const style = {
     transform: CSS.Transform.toString(transform),
     transition,
@@ -29,8 +30,9 @@ export default function PromptCard({ prompt, index, categoryId }) {
     zIndex: isDragging ? 999 : "auto"
   }
 
+  // status change
   const handleStatusChange = async (checked) => {
-    const response = await dispatch(updatePromptAction(prompt._id || prompt.id, prompt.title, checked, categoryId));
+    const response = await dispatch(updatePromptAction(prompt._id || prompt.id, { ...prompt, isActive: checked }, categoryId));
     if (response?.success) {
       toast.success("Status updated successfully");
     } else {
@@ -39,6 +41,7 @@ export default function PromptCard({ prompt, index, categoryId }) {
   }
   // console.log(prompt, "prompt");
 
+  // copy prompt
   const handleCopy = () => {
     if (prompt?.title && prompt?.readyMatePrompt) {
       navigator.clipboard.writeText(prompt.title + "\n" + prompt.readyMatePrompt);
@@ -49,7 +52,6 @@ export default function PromptCard({ prompt, index, categoryId }) {
       toast.success("Prompt copied to clipboard");
     }
   }
-
 
   return (
     <div ref={setNodeRef} style={style}>
@@ -80,7 +82,7 @@ export default function PromptCard({ prompt, index, categoryId }) {
 
 
           {/* Left Column - Image (Spans 4 columns on md screens) */}
-          <div className='md:col-span-4 lg:col-span-3 relative h-60 overflow-hidden'>
+          <div className='md:col-span-4 lg:col-span-3 relative h-full overflow-hidden'>
             <img
               src={prompt.thumbnail}
               alt={prompt.title}
@@ -103,9 +105,20 @@ export default function PromptCard({ prompt, index, categoryId }) {
               {prompt.readyMatePrompt || prompt.description}
             </p>
 
-            <div className='mt-2'>
-
+            <div className='flex items-center gap-4 justify-between'>
               <Switch variant="outlined" checked={prompt.isActive} label={prompt.isActive ? "Active" : "Inactive"} onChange={(e) => handleStatusChange(e.target.checked)} />
+              <div className="flex">
+                <div
+                  onClick={onDelete}
+                  className="top-3 flex -space-x-4 text-gray-400 active:text-primary-500 transition-colors opacity-100 cursor-pointer active:scale-95 z-10 p-2">
+                  <TrashIcon className="size-6 cursor-pointer text-error" />
+                </div>
+                <div
+                  onClick={onEdit}
+                  className="top-3 flex -space-x-4 text-gray-400 active:text-primary-500 transition-colors opacity-100 cursor-pointer active:scale-95 z-10 p-2">
+                  <PencilSquareIcon className="size-6 cursor-pointer text-primary-400" />
+                </div>
+              </div>
             </div>
 
             <div className='flex flex-wrap items-center justify-between gap-2 mt-auto'>
@@ -124,4 +137,6 @@ export default function PromptCard({ prompt, index, categoryId }) {
       </Card>
     </div>
   )
-}
+});
+
+export default PromptCard;

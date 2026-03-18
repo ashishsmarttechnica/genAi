@@ -1,6 +1,6 @@
 import axiosClient from "utils/axios";
 
-export const getPromptAction = (page = 1, limit = 10, search = "", categoryId = "", isLoadMore = false) => {
+export const getPromptAction = (page = 1, limit = 10, categoryId = "", isLoadMore = false) => {
     return async (dispatch) => {
         if (isLoadMore) {
             dispatch({ type: "PROMPT_DATA_LOAD_MORE_LOADING" });
@@ -9,7 +9,7 @@ export const getPromptAction = (page = 1, limit = 10, search = "", categoryId = 
         }
 
         try {
-            const res = await axiosClient.get(`/prompt?page=${page}&limit=${limit}&search=${search}&categoryId=${categoryId}`)
+            const res = await axiosClient.get(`/prompt?page=${page}&limit=${limit}&categoryId=${categoryId}`)
 
             if (res && res.data && res.data.success) {
                 if (isLoadMore) {
@@ -121,40 +121,95 @@ export const movePromptAction = (categoryId, promptId, newIndex, targetDbIndex, 
 
 
 
-export const updatePromptAction = (promptId, promptName, isActive, categoryId = "") => {
+export const updatePromptAction = (promptId, formData, categoryId = "") => {
+    return async (dispatch, getState) => {
+        const cacheKey = categoryId || 'ALL';
+        const previousDataBackup = getState().prompt?.cache?.[cacheKey];
+        
+        try {
+            // instant feedback (ui update)
+            dispatch({
+                type: "PROMPT_DATA_UPDATE",
+                payload: { 
+                    promptId, 
+                    isActive: formData instanceof FormData ? formData.get('isActive') === 'true' : formData.isActive,
+                    // If we have title in formData, update it too for optimistic UI
+                    title: formData instanceof FormData ? formData.get('title') : formData.title,
+                    cacheKey 
+                }
+            })
+
+            // Construct FormData if it's a plain object (to ensure consistent handling)
+            let body = formData;
+            let headers = {};
+            
+            if (!(formData instanceof FormData)) {
+                body = new FormData();
+                Object.keys(formData).forEach(key => {
+                    if (key === 'thumbnail' && typeof formData[key] === 'string') {
+                        // Skip if it's a URL string (no change to image)
+                        return;
+                    }
+                    body.append(key, formData[key]);
+                });
+                headers = { "Content-Type": "multipart/form-data" };
+            } else {
+                headers = { "Content-Type": "multipart/form-data" };
+            }
+
+            const res = await axiosClient.put(`/prompt/${promptId}`, body, { headers });
+
+            if (res && res.data && res.data.success) {
+                return {
+                    success: true,
+                    message: res.data.message || "Prompt updated successfully!",
+                    data: res.data,
+                };
+            } else {
+                dispatch({ type: "PROMPT_DATA_ERROR", payload: { data: previousDataBackup, cacheKey } });
+                return { success: false, message: res.data?.message || "Failed to update prompt" };
+            }
+        }
+        catch (error) {
+            dispatch({ type: "PROMPT_DATA_ERROR", payload: { data: previousDataBackup, cacheKey } });
+            return {
+                success: false,
+                message: error.response?.data?.message || "Something went wrong"
+            };
+        }
+    }
+}
+
+
+
+export const deletePromptAction = (promptId, categoryId = "") => {
     return async (dispatch, getState) => {
         const cacheKey = categoryId || 'ALL';
         const previousDataBackup = getState().prompt?.cache?.[cacheKey];
         try {
             // instant feedback (ui update - array position mapping)
             dispatch({
-                type: "PROMPT_DATA_UPDATE",
-                payload: { promptId, isActive, cacheKey }
+                type: "PROMPT_DATA_DELETE",
+                payload: { promptId, cacheKey }
             })
 
             // api call (Database index mapping)
-            const res = await axiosClient.put(`/prompt/${promptId}`, {
-                title: promptName,
-                isActive: isActive,
-            });
+            const res = await axiosClient.delete(`/prompt/${promptId}`);
 
             if (res && res.data && res.data.success) {
-                // DON'T dispatch PROMPT_DATA_SUCCESS here because the move API response 
-                // doesn't contain the full prompts array. The optimistic update already 
-                // fixed the UI, so we just return success.
                 return {
                     success: true,
-                    message: res.data.message || "Prompt data update successfully!",
+                    message: res.data.message || "Prompt data delete successfully!",
                     data: res,
                 };
             } else {
                 dispatch({ type: "PROMPT_DATA_ERROR", payload: { data: previousDataBackup, cacheKey } });
-                console.error("update Failed reverting ui back");
+                console.error("delete Failed reverting ui back");
             }
         }
         catch (error) {
             dispatch({ type: "PROMPT_DATA_ERROR", payload: { data: previousDataBackup, cacheKey } });
-            console.error("Update Api error ", error)
+            console.error("Delete Api error ", error)
         }
     }
 }

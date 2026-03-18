@@ -1,4 +1,4 @@
-import { CategoryTableRow } from 'app/pages/dashboards/category/CategoryTable';
+import { CategoryTableRow } from 'app/pages/dashboards/category/CategoryTableData';
 import * as ReactWindow from 'react-window';
 const { List } = ReactWindow;
 
@@ -8,7 +8,7 @@ const CategoryRow = ({ index, style, data }) => {
     const item = data[index];
     return (
         <div style={style} className="px-2 border-b border-gray-100/10">
-            <CategoryTableRow key={item._id || item.id} category={item} />
+            <CategoryTableRow key={item._id || item.id} category={item} index={index + 1} />
         </div>
     );
 };

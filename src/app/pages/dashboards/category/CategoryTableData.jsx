@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useSortable } from '@dnd-kit/sortable'
 import { CSS } from "@dnd-kit/utilities"
-import { EllipsisVerticalIcon, TrashIcon } from "@heroicons/react/24/outline"
+import { EllipsisVerticalIcon, TrashIcon, PencilSquareIcon } from "@heroicons/react/24/outline"
 import { useNavigate } from 'react-router-dom'
 import { Button } from 'components/ui/Button';
 import { Switch } from "components/ui";
@@ -10,7 +10,7 @@ import { updateCategoryDataAction, deleteCategory } from 'redux/actions/category
 import { toast } from "sonner";
 import { ConfirmModal } from 'components/shared/ConfirmModal';
 
-export function CategoryTableRow({ category }) {
+export function CategoryTableRow({ category, index }) {
     const navigate = useNavigate()
     const dispatch = useDispatch()
     const [showDeleteModal, setShowDeleteModal] = useState(false);
@@ -75,7 +75,7 @@ export function CategoryTableRow({ category }) {
                     <EllipsisVerticalIcon className="w-5 h-5 pointer-events-none" />
                 </div>
             </div>
-            <div className="w-32 p-4 text-center">{category.index}</div>
+            <div className="w-32 p-4 text-center">{index}</div>
 
             <div className="flex-1 p-4 font-semibold">{category.name}</div>
             <div className="flex-1 p-4 font-semibold text-center">{category.createdAt ? new Date(category.createdAt).toLocaleDateString("en-US", { year: "numeric", month: "short", day: "numeric" }) : 'N/A'}</div>
@@ -85,15 +85,18 @@ export function CategoryTableRow({ category }) {
                 <Switch variant="outlined" checked={category.isActive} label={category.isActive ? "Active" : "Inactive"} onChange={(e) => handleStatusChange(e.target.checked)} />
             </div>
 
-            <div className="flex-1 p-4 font-semibold text-center">
+            <div className="w-32 p-4 font-semibold text-center">
                 <Button variant="filled" onClick={handleClick} className="p-2">View</Button>
             </div>
 
-            <div className="flex-1 p-4 font-semibold text-center">
-                <Button variant="filled" color="error" onClick={() => setShowDeleteModal(true)} className="p-2">
-                    <TrashIcon className="size-5" />
-                </Button>
+            <div className="w-24 p-4 font-semibold text-center">
+                <PencilSquareIcon className="size-6 cursor-pointer text-primary-400" />
             </div>
+
+            <div className="w-24 p-4 font-semibold text-center">
+                <TrashIcon className="size-6 cursor-pointer text-error" onClick={() => setShowDeleteModal(true)} />
+            </div>
+
 
             <ConfirmModal
                 show={showDeleteModal}
@@ -109,6 +112,26 @@ export function CategoryTableRow({ category }) {
                     }
                 }}
             />
+
+
+            {/* <ActionModal
+                show={showEditModal}
+                title="Edit Category"
+                confirmText="Update"
+                onClose={() => setShowEditModal(false)}
+                onConfirm={handleUpdateCategory}
+                loading={mutationLoading}
+                disabled={!formData.name.trim()}
+            >
+                <Input
+                    label="Category Name"
+                    placeholder="e.g. Anime, Digital Art, etc."
+                    value={formData.name}
+                    onChange={(e) => setNewCategoryName(e.target.value)}
+                    disabled={mutationLoading}
+                    autoFocus
+                />
+            </ActionModal> */}
         </div>
     )
 }
