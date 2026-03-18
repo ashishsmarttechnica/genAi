@@ -1,4 +1,5 @@
 // Import Dependencies
+import { useEffect } from "react";
 import {
   ArrowUpIcon,
   CubeIcon,
@@ -7,11 +8,10 @@ import {
   UsersIcon,
 } from "@heroicons/react/24/outline";
 import { useSelector, useDispatch } from "react-redux";
-import { useEffect } from "react";
 
 // Local Imports
 import { Avatar, Card } from "components/ui";
-import { getCount } from "redux/actions/CountAction";
+import { getCount } from "redux/actions/countsAction";
 
 // ----------------------------------------------------------------------
 
@@ -24,7 +24,6 @@ export function Overview() {
       dispatch(getCount());
     }
   }, []);
-
 
   return (
     <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 sm:gap-5 lg:grid-cols-4 lg:gap-6">
