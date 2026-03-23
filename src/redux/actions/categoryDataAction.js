@@ -155,7 +155,7 @@ export const updateCategoryDataAction = (categoryId, categoryName, isActive) => 
 
             // api call
             const res = await axiosClient.put(`/category/update/${categoryId}`, {
-                categoryName: categoryName,
+                name: categoryName,
                 isActive: isActive
             });
 

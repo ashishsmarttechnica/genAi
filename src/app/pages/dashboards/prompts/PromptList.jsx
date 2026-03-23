@@ -1,5 +1,5 @@
 import PromptCard from './PromptCard'
-import { useEffect, useState, useCallback, useMemo } from 'react'
+import { useEffect, useState, useCallback } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import { useSearchParams } from 'react-router-dom'
 import { getPromptAction, movePromptAction } from 'redux/actions/promptAction'
@@ -16,6 +16,7 @@ import { ArrowPathIcon } from "@heroicons/react/24/outline";
 import clsx from "clsx";
 import { ConfirmModal } from 'components/shared/ConfirmModal';
 import { deletePromptAction, updatePromptAction } from 'redux/actions/promptAction';
+import { useDebounceValue } from 'hooks'
 
 
 export default function PromptList() {
@@ -29,6 +30,7 @@ export default function PromptList() {
     const { data: categoryData } = useSelector((state) => state.categoryData || { data: { categories: [] } })
 
     const [search, setSearch] = useState("");
+    const [debouncedSearch] = useDebounceValue(search, 500);
 
     const [showModal, setShowModal] = useState(false);
     const [createLoading, setCreateLoading] = useState(false);
@@ -57,7 +59,7 @@ export default function PromptList() {
     });
 
     // Derive the active dataset from cache dictionary
-    const cacheKey = categoryId || 'ALL';
+    const cacheKey = categoryId || debouncedSearch || 'ALL';
     const promptsData = cache[cacheKey];
 
     const sensors = useSensors(
@@ -70,29 +72,29 @@ export default function PromptList() {
     )
 
     // Filter prompts based on search
-    const filteredCategories = useMemo(() => {
-        if (!promptsData?.categories) return [];
-        if (!search) return promptsData.categories;
+    // const filteredCategories = useMemo(() => {
+    //     if (!promptsData?.categories) return [];
+    //     // if (!search) return promptsData.categories;
 
-        const searchTerm = search.toLowerCase();
+    //     const searchTerm = search.toLowerCase();
 
-        return promptsData.categories.map(category => {
-            const matchingPrompts = category.prompts.filter(prompt => {
-                const title = prompt.title?.toLowerCase() || "";
-                // const readyMatePrompt = prompt.readyMatePrompt?.toLowerCase() || "";
-                const isActive = prompt.isActive?.toString().toLowerCase() || "";
+    //     return promptsData.categories.map(category => {
+    //         const matchingPrompts = category.prompts.filter(prompt => {
+    //             const title = prompt.title?.toLowerCase() || "";
+    //             // const readyMatePrompt = prompt.readyMatePrompt?.toLowerCase() || "";
+    //             const isActive = prompt.isActive?.toString().toLowerCase() || "";
 
-                return title.includes(searchTerm) ||
-                    // readyMatePrompt.includes(searchTerm) ||
-                    isActive.includes(searchTerm);
-            });
+    //             return title.includes(searchTerm) ||
+    //                 // readyMatePrompt.includes(searchTerm) ||
+    //                 isActive.includes(searchTerm);
+    //         });
 
-            return {
-                ...category,
-                prompts: matchingPrompts
-            };
-        }).filter(category => category.prompts.length > 0);
-    }, [promptsData, search]);
+    //         return {
+    //             ...category,
+    //             prompts: matchingPrompts
+    //         };
+    //     }).filter(category => category.prompts.length > 0);
+    // }, [promptsData, search]);
 
     const handleDragEnd = (event) => {
         const { active, over } = event;
@@ -133,15 +135,15 @@ export default function PromptList() {
     useEffect(() => {
         if (!promptsData && !loading) {
             setPage(1);
-            const initialLimit = categoryId ? 10 : 2;
-            dispatch(getPromptAction(1, initialLimit, categoryId, false));
+            const initialLimit = categoryId ? 20 : (categoryId ? 10 : 2);
+            dispatch(getPromptAction(1, initialLimit, debouncedSearch, categoryId, false));
         }
         else if (promptsData && promptsData.pagination) {
             // Restore actual page tracking when coming from cache
             setPage(promptsData.pagination.page);
         }
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [categoryId, promptsData, dispatch]);
+    }, [categoryId, search, promptsData, dispatch]);
 
     // Set up edit form data when a prompt is selected for editing
     useEffect(() => {
@@ -245,32 +247,32 @@ export default function PromptList() {
     const handleRefresh = async () => {
         setPage(1);
         const initialLimit = categoryId ? 10 : 2;
-        dispatch(getPromptAction(1, initialLimit, categoryId, false));
+        dispatch(getPromptAction(1, initialLimit, debouncedSearch, categoryId, false));
     };
 
     // category modal is open then fetch category data
     useEffect(() => {
-        if (!categoryData?.categories?.length && showModal === true) {
+        if (!categoryData?.categories?.length && showModal === true && showDeleteModal === true) {
             dispatch(getCategoryDataAction(1)); // Fetch all for dropdown
         }
-    }, [dispatch, categoryData, showModal]);
+    }, [dispatch, categoryData, showModal, showDeleteModal]);
 
     const handleLoadMore = useCallback(() => {
         // Strict guard: No more requests if loading OR if it's an active search
-        if (loading || loadingMore || search) return;
-        
+        if (loading || loadingMore) return;
+
         const nextPage = page + 1
         setPage(nextPage)
 
         // As per user request, search is client-side only, so we fetch unfiltered next-page
         const scrollLimit = categoryId ? 10 : 1;
-        dispatch(getPromptAction(nextPage, scrollLimit, categoryId, true))
-    }, [page, categoryId, search, dispatch, loading, loadingMore])
+        dispatch(getPromptAction(nextPage, scrollLimit, debouncedSearch, categoryId, true))
+    }, [page, categoryId, debouncedSearch, dispatch, loading, loadingMore])
 
     const lastElementRef = useInfiniteScroll({
         loading: loading || loadingMore,
         // hasMore is FALSE when searching to prevent background request loops
-        hasMore: (promptsData?.pagination?.page < promptsData?.pagination?.pages) && !search && !loadingMore && !loading,
+        hasMore: (promptsData?.pagination?.page < promptsData?.pagination?.pages) && !loadingMore && !loading,
         onLoadMore: handleLoadMore
     })
 
@@ -283,8 +285,8 @@ export default function PromptList() {
                         <div className="flex items-center gap-3 sm:gap-4">
                             <div className="h-8 w-2 sm:h-10 sm:w-2.5 bg-linear-to-b from-primary-400 to-primary-600 rounded-full shadow-sm"></div>
                             <h2 className='text-xl sm:text-2xl md:text-3xl font-bold tracking-tight text-gray-900 dark:text-white drop-shadow-sm'>
-                                {categoryId && filteredCategories.length === 1
-                                    ? filteredCategories[0].name
+                                {categoryId && promptsData?.categories?.length === 1
+                                    ? promptsData?.categories[0].name
                                     : "All Prompts"
                                 }
                             </h2>
@@ -317,7 +319,7 @@ export default function PromptList() {
                             <div className='animate-spin rounded-full h-12 w-12 border-4 border-primary-500 border-t-transparent'></div>
                         </div>
                     )
-                        : filteredCategories.length === 0 ? (
+                        : promptsData?.categories?.length === 0 ? (
                             <div className='flex flex-col justify-center items-center h-full min-h-[300px] text-gray-500 dark:text-gray-400'>
                                 <p className="text-lg font-medium">No prompts found</p>
                                 {categoryId && <p className="text-sm mt-1">Try selecting a different category</p>}
@@ -331,13 +333,13 @@ export default function PromptList() {
                                         onDragEnd={handleDragEnd}
                                     >
                                         <SortableContext
-                                            items={filteredCategories.flatMap((category) => (
+                                            items={(promptsData?.categories || []).flatMap((category) => (
                                                 category.prompts.map((prompt) => (prompt._id || prompt.id))
                                             ))}
                                             strategy={rectSortingStrategy}
                                         >
                                             <div className='flex flex-col gap-10'>
-                                                {filteredCategories.map((category) => (
+                                                {(promptsData?.categories || []).map((category) => (
                                                     <div
                                                         key={category._id || category.id}
                                                         className='category-section-observer scroll-mt-24'

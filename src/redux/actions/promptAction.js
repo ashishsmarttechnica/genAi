@@ -1,6 +1,6 @@
 import axiosClient from "utils/axios";
 
-export const getPromptAction = (page = 1, limit = 10, categoryId = "", isLoadMore = false) => {
+export const getPromptAction = (page = 1, limit = 10, search = "", categoryId = "", isLoadMore = false) => {
     return async (dispatch) => {
         if (isLoadMore) {
             dispatch({ type: "PROMPT_DATA_LOAD_MORE_LOADING" });
@@ -9,13 +9,13 @@ export const getPromptAction = (page = 1, limit = 10, categoryId = "", isLoadMor
         }
 
         try {
-            const res = await axiosClient.get(`/prompt?page=${page}&limit=${limit}&categoryId=${categoryId}`)
+            const res = await axiosClient.get(`/prompt?page=${page}&limit=${limit}&search=${search}&categoryId=${categoryId}`)
 
             if (res && res.data && res.data.success) {
                 if (isLoadMore) {
-                    dispatch({ type: "PROMPT_DATA_LOAD_MORE_SUCCESS", payload: res.data, meta: { categoryId } })
+                    dispatch({ type: "PROMPT_DATA_LOAD_MORE_SUCCESS", payload: res.data, meta: { categoryId, search } })
                 } else {
-                    dispatch({ type: "PROMPT_DATA_SUCCESS", payload: res.data, meta: { categoryId } })
+                    dispatch({ type: "PROMPT_DATA_SUCCESS", payload: res.data, meta: { categoryId, search } })
                 }
                 return {
                     success: true,

@@ -9,12 +9,16 @@ import { useDispatch } from 'react-redux';
 import { updateCategoryDataAction, deleteCategory } from 'redux/actions/categoryDataAction';
 import { toast } from "sonner";
 import { ConfirmModal } from 'components/shared/ConfirmModal';
-
+import { ActionModal } from 'components/shared/ActionModal';
+import { Input } from 'components/ui';
 export function CategoryTableRow({ category, index }) {
     const navigate = useNavigate()
     const dispatch = useDispatch()
     const [showDeleteModal, setShowDeleteModal] = useState(false);
     const [deleteLoading, setDeleteLoading] = useState(false);
+    const [showEditModal, setShowEditModal] = useState(false);
+    const [editCategoryName, setEditCategoryName] = useState("");
+    const [updateLoading, setUpdateLoading] = useState(false);
 
     const {
         attributes,
@@ -59,6 +63,19 @@ export function CategoryTableRow({ category, index }) {
         }
     }
 
+    const handleUpdateCategory = async () => {
+        if (!editCategoryName.trim()) return;
+        setUpdateLoading(true);
+        const response = await dispatch(updateCategoryDataAction(category._id || category.id, editCategoryName, category.isActive));
+        setUpdateLoading(false);
+        if (response?.success) {
+            toast.success("Category updated successfully");
+            setShowEditModal(false);
+        } else {
+            toast.error(response?.message || "Failed to update category");
+        }
+    }
+
     return (
         <div
             ref={setNodeRef}
@@ -90,7 +107,13 @@ export function CategoryTableRow({ category, index }) {
             </div>
 
             <div className="w-24 p-4 font-semibold text-center">
-                <PencilSquareIcon className="size-6 cursor-pointer text-primary-400" />
+                <PencilSquareIcon 
+                    className="size-6 cursor-pointer text-primary-400" 
+                    onClick={() => {
+                        setEditCategoryName(category.name);
+                        setShowEditModal(true);
+                    }}
+                />
             </div>
 
             <div className="w-24 p-4 font-semibold text-center">
@@ -114,24 +137,24 @@ export function CategoryTableRow({ category, index }) {
             />
 
 
-            {/* <ActionModal
+            <ActionModal
                 show={showEditModal}
                 title="Edit Category"
                 confirmText="Update"
                 onClose={() => setShowEditModal(false)}
                 onConfirm={handleUpdateCategory}
-                loading={mutationLoading}
-                disabled={!formData.name.trim()}
+                loading={updateLoading}
+                disabled={!editCategoryName.trim() || editCategoryName === category.name}
             >
                 <Input
                     label="Category Name"
                     placeholder="e.g. Anime, Digital Art, etc."
-                    value={formData.name}
-                    onChange={(e) => setNewCategoryName(e.target.value)}
-                    disabled={mutationLoading}
+                    value={editCategoryName}
+                    onChange={(e) => setEditCategoryName(e.target.value)}
+                    disabled={updateLoading}
                     autoFocus
                 />
-            </ActionModal> */}
+            </ActionModal>
         </div>
     )
 }

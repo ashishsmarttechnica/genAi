@@ -16,7 +16,7 @@ const PromptReducer = (state = initialState, action) => {
                 error: null
             }
         case "PROMPT_DATA_SUCCESS": {
-            const cacheKey = action.meta.categoryId || 'ALL';
+            const cacheKey = action.meta.categoryId || action.meta.search || 'ALL';
             return {
                 ...state,
                 loading: false,
@@ -81,7 +81,7 @@ const PromptReducer = (state = initialState, action) => {
                 error: null
             }
         case "PROMPT_DATA_LOAD_MORE_SUCCESS": {
-            const cacheKey = action.meta.categoryId || 'ALL';
+            const cacheKey = action.meta.categoryId || action.meta.search || 'ALL'; // <-- yahan search add kiya
             const existingData = state.cache[cacheKey] || {};
             const existingCategories = [...(existingData.categories || [])];
             const newCategories = action.payload.data?.categories || [];

@@ -120,10 +120,10 @@ const categoryDataReducer = (state = initialState, action) => {
         }
 
         case "CATEGORY_DATA_UPDATE": {
-            const { categoryId, isActive } = action.payload;
+            const { categoryId, categoryName, isActive } = action.payload;
             const updatedCategories = state.data.categories.map((category) => {
                 if (category._id === categoryId || category.id === categoryId) {
-                    return { ...category, isActive };
+                    return { ...category, name: categoryName, isActive };
                 }
                 return category;
             });
