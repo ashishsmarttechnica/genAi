@@ -24,7 +24,7 @@ export default function UsersList() {
     order: ""
   });
 
-  const { data, loading, cache } = useSelector((state) => state.usersData);
+  const { data, loading } = useSelector((state) => state.usersData);
   const users = data?.data?.users || [];
   const paginationData = data?.data?.pagination || {};
   const totalPages = paginationData.pages || 1;
@@ -40,15 +40,8 @@ export default function UsersList() {
     const currentPage = pagination.pageIndex + 1;
     const currentLimit = pagination.pageSize;
 
-    const cacheKey = `page-${currentPage}-limit-${currentLimit}`;
-
-    // check if we already have the data in store for this page
-    const isDataCached = cache && cache[cacheKey];
-
-    if (!isDataCached) {
-      dispatch(getUserDataAction(currentPage, currentLimit));
-    }
-  }, [pagination.pageIndex, pagination.pageSize, cache, dispatch]);
+    dispatch(getUserDataAction(currentPage, currentLimit));
+  }, [pagination.pageIndex, pagination.pageSize, dispatch]);
 
 
   // handle sort by column
@@ -73,15 +66,17 @@ export default function UsersList() {
 
 
   // filter data by search
-  const filtterData = users?.filter((item) => {
-    if (!search) return true;
-    const fullName = item?.firstName + " " + item?.lastName;
-    return fullName.toLowerCase().includes(search.toLowerCase());
-  }) || [];
+  const filterData = useMemo(() => {
+    return users?.filter((item) => {
+      if (!search) return true;
+      const fullName = item?.firstName + " " + item?.lastName;
+      return fullName.toLowerCase().includes(search.toLowerCase());
+    }) || [];
+  }, [users, search]);
 
 
   const sortedAndFilteredData = useMemo(() => {
-    let result = [...filtterData];
+    let result = [...filterData];
 
     if (sortConfig.column && sortConfig.order) {
       result.sort((a, b) => {
@@ -112,7 +107,7 @@ export default function UsersList() {
       });
     }
     return result;
-  }, [filtterData, sortConfig]);
+  }, [filterData, sortConfig]);
 
 
 

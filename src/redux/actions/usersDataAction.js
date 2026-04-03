@@ -1,7 +1,23 @@
 import axiosClient from "utils/axios";
 
 export const getUserDataAction = (page = 1, limit = 10) => {
-    return async (dispatch) => {
+    return async (dispatch, getState) => {
+        const { cache } = getState().usersData;
+        const cacheKey = `page-${page}-limit-${limit}`;
+
+        // Check if we already have the data in store for this page
+        if (cache && cache[cacheKey]) {
+            dispatch({
+                type: "USERS_DATA_SUCCESS",
+                payload: cache[cacheKey]
+            });
+            return {
+                success: true,
+                message: "User data loaded from cache",
+                data: cache[cacheKey],
+            };
+        }
+
         dispatch({ type: "USERS_DATA_LOADING" });
         try {
             const res = await axiosClient.get(`/admin/users?page=${page}&limit=${limit}`)
