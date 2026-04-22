@@ -24,8 +24,8 @@ import { Page } from "components/shared/Page";
 
 // ----------------------------------------------------------------------
 
-/** Base API URL – adjust via env */
-const API_BASE = import.meta.env.VITE_API_URL;
+/** Base API URL – adjust via env (stripped trailing slash to prevent double slash) */
+const API_BASE = (import.meta.env.VITE_API_URL || "").replace(/\/+$/, "");
 
 /** Fixed country code prefix (non-editable) */
 const COUNTRY_CODE = "+91";
