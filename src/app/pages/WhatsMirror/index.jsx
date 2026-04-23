@@ -323,7 +323,7 @@ export default function WhatsMirror() {
                   {/* Hint */}
                   {!error && (
                     <p id="wm-phone-hint" className="text-xs text-gray-400 dark:text-dark-300">
-                      Enter 10-digit mobile number &nbsp;·&nbsp; API will receive&nbsp;
+                      Enter 10-digit mobile number &nbsp;·&nbsp;&nbsp;
                       <code className="rounded bg-gray-100 px-1 dark:bg-dark-600">
                         +91{digits || "XXXXXXXXXX"}
                       </code>
